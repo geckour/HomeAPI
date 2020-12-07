@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">HomeAPI</string>
+
+    <string name="request_environmental">👀 環境値を見る</string>
 </resources>
