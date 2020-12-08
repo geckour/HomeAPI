@@ -27,9 +27,15 @@ class MainActivity : AppCompatActivity() {
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         binding.recyclerView.apply {
-            val layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.VERTICAL, false)
-            this.layoutManager = layoutManager
-            addItemDecoration(DividerItemDecoration(this@MainActivity, layoutManager.orientation))
+            val linearLayoutManager = LinearLayoutManager(
+                this@MainActivity,
+                LinearLayoutManager.VERTICAL,
+                false
+            ).apply { stackFromEnd = true }
+
+            layoutManager = linearLayoutManager
+            addItemDecoration(DividerItemDecoration(this@MainActivity, linearLayoutManager.orientation))
+
             adapter = Adapter(viewModel.items)
         }
         binding.requestEnvironmental.setOnClickListener { viewModel.requestEnvironmentalData() }
