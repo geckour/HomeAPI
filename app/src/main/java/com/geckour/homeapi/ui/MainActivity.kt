@@ -1,6 +1,7 @@
 package com.geckour.homeapi.ui
 
 import android.os.Bundle
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -38,7 +39,10 @@ class MainActivity : AppCompatActivity() {
 
             adapter = Adapter(viewModel.items)
         }
-        binding.requestEnvironmental.setOnClickListener { viewModel.requestEnvironmentalData() }
+        binding.requestEnvironmental.setOnClickListener {
+            viewModel.requestEnvironmentalData()
+            it.haptic()
+        }
         binding.loadingIndicator.setOnClickListener {
             viewModel.cancelPendingRequest()
             toggleLoadingIndicator(false)
@@ -92,9 +96,19 @@ class MainActivity : AppCompatActivity() {
             fun onBind(item: RequestData) {
                 binding.apply {
                     requestData = item
-                    root.setOnClickListener { item.onClick() }
+                    root.setOnClickListener {
+                        item.onClick()
+                        it.haptic()
+                    }
                 }
             }
         }
     }
+}
+
+private fun View.haptic() {
+    performHapticFeedback(
+        HapticFeedbackConstants.CONTEXT_CLICK,
+        HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING or HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING
+    )
 }
