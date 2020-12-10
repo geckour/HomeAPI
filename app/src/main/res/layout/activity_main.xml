@@ -30,7 +30,7 @@
                 android:paddingHorizontal="20dp"
                 android:paddingVertical="14dp"
                 android:text="@string/request_environmental"
-                android:textColor="?attr/colorPrimary"
+                android:textColor="@color/pale_white"
                 android:textSize="16sp" />
         </LinearLayout>
 
