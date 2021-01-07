@@ -59,9 +59,17 @@ class MainActivity : AppCompatActivity() {
 
             it.environmentalData?.let { data ->
                 AlertDialog
-                    .Builder(this)
+                    .Builder(this, R.style.Theme_HomeAPI_AlertDialog)
                     .setTitle("📡 環境値")
-                    .setMessage("気温: ${data.temperature} [℃]\n湿度: ${data.humidity} [%]\n気圧: ${data.pressure} [hPa]\n照度: ${data.illuminance} [lux]")
+                    .setMessage(
+                        String.format(
+                            "🌡 %.2f [℃]\n💧 %.2f [%%]\n🌪 %.2f [hPa]\n💡 %.2f [lux]",
+                            data.temperature,
+                            data.humidity,
+                            data.pressure,
+                            data.illuminance
+                        )
+                    )
                     .setCancelable(true)
                     .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
                     .show()

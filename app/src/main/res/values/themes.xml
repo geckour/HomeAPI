@@ -14,4 +14,8 @@
         <!-- Customize your theme here. -->
         <item name="colorOnBackground">#80ffffff</item>
     </style>
+
+    <style name="Theme.HomeAPI.AlertDialog" parent="Base.ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="android:lineHeight">30sp</item>
+    </style>
 </resources>
