@@ -104,9 +104,11 @@ class MainActivity : AppCompatActivity() {
             fun onBind(item: RequestData) {
                 binding.apply {
                     requestData = item
-                    root.setOnClickListener {
-                        item.onClick()
-                        it.haptic()
+                    item.onClick?.let { onClick ->
+                        root.setOnClickListener {
+                            onClick()
+                            it.haptic()
+                        }
                     }
                 }
             }
