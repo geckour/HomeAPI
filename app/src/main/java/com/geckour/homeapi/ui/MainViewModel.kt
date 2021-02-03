@@ -51,7 +51,7 @@ class MainViewModel : ViewModel() {
         RequestData("🔼 ボリューム") { sendAmp(AmpCommand.VOL_UP) },
         RequestData("🔽 ボリューム") { sendAmp(AmpCommand.VOL_DOWN) },
         RequestData("🔌 アンプ電源") { sendAmp(AmpCommand.TOGGLE_POWER) },
-        RequestData(""),
+        RequestData(null),
         RequestData("🌟 全灯") { sendCeilingLight(CeilingLightCommand.ALL_ON) },
         RequestData("💡 点灯") { sendCeilingLight(CeilingLightCommand.ON) },
         RequestData("🌚 常夜灯") { sendCeilingLight(CeilingLightCommand.NIGHT_ON) },
