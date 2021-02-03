@@ -45,5 +45,5 @@ enum class AmpCommand(val rawValue: String) {
     SELECT_TUNER("amp_select_tuner"),
     SELECT_RECORDER("amp_select_recorder"),
     SELECT_COAXIAL("amp_select_coaxial"),
-    MODE_SOURCE_DIRECT("amp_mode_toggle_source-direct"),
+    MODE_TOGGLE_SOURCE_DIRECT("amp_mode_toggle_source-direct"),
 }

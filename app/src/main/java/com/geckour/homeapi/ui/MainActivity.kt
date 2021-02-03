@@ -7,10 +7,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement.Bottom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayout
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.preferredHeight
+import androidx.compose.foundation.layout.preferredWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.AlertDialog
@@ -45,41 +52,27 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             MaterialTheme {
-                Column(verticalArrangement = Bottom, modifier = Modifier.fillMaxSize(1f)) {
-                    LazyColumn(verticalArrangement = Bottom, modifier = Modifier.weight(1f)) {
+                Column(verticalArrangement = Bottom, modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(verticalArrangement = Bottom, modifier = Modifier.weight(1f), reverseLayout = true) {
                         items(viewModel.items) { item -> Item(item = item) }
                     }
-                    Box(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .align(Alignment.CenterHorizontally)
-                    ) {
-                        Button(
-                            onClick = {
-                                viewModel.requestEnvironmentalData()
-                                AmbientHapticFeedback
-                            },
-                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(getColor(R.color.teal_700))),
-                        ) {
-                            Text(text = getString(R.string.request_environmental), fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                        }
-                    }
+                    Tab()
+                    Environmental()
                 }
 
                 Loading()
                 Error()
 
-                Environmental()
+                EnvironmentalDialog()
             }
         }
     }
 
     @Composable
     fun Item(item: RequestData) {
-        Divider(color = Color(0x18ffffff))
         Button(
             onClick = item.onClick,
-            modifier = Modifier.fillMaxSize(1f),
+            modifier = Modifier.fillMaxSize(),
             colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
             elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp),
             shape = RectangleShape,
@@ -87,12 +80,81 @@ class MainActivity : AppCompatActivity() {
         ) {
             Text(
                 text = item.name,
-                modifier = Modifier.fillMaxWidth(1f),
+                modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Start,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
                 color = Color(0xc0ffffff)
             )
+        }
+        Divider(color = Color(0x20ffffff))
+    }
+
+    @OptIn(ExperimentalLayout::class)
+    @Composable
+    fun Tab() {
+        Divider(color = Color(0xff018786))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .preferredHeight(IntrinsicSize.Min)
+        ) {
+            TabItem(text = "天井灯") { viewModel.showCeilingLightItems() }
+            VerticalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            TabItem(text = "アンプ") { viewModel.showAmpItems() }
+        }
+    }
+
+    @Composable
+    fun RowScope.TabItem(text: String, onClick: () -> Unit) {
+        Button(
+            onClick = onClick,
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
+            elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp),
+            shape = RectangleShape,
+            modifier = Modifier
+                .weight(1f)
+                .padding(8.dp)
+        ) {
+            Text(
+                text = text,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                color = Color(0xc0ffffff)
+            )
+        }
+    }
+
+    @Composable
+    fun VerticalDivider(modifier: Modifier = Modifier) {
+        Box(
+            modifier = modifier
+                .fillMaxHeight()
+                .preferredWidth(1.dp)
+                .background(color = Color(0x20ffffff))
+        )
+    }
+
+    @Composable
+    fun Environmental() {
+        Box(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            Button(
+                onClick = {
+                    viewModel.requestEnvironmentalData()
+                    AmbientHapticFeedback
+                },
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color(getColor(R.color.teal_700))),
+                modifier = Modifier.align(Alignment.Center),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
+            ) {
+                Text(text = getString(R.string.request_environmental), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
         }
     }
 
@@ -101,10 +163,10 @@ class MainActivity : AppCompatActivity() {
         if (viewModel.data.isLoading) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize(1f)
+                    .fillMaxSize()
                     .background(color = Color(0x80000000))
             ) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF03DAC5))
             }
         }
     }
@@ -117,7 +179,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    fun Environmental() {
+    fun EnvironmentalDialog() {
         viewModel.data.environmentalData?.let {
             AlertDialog(
                 onDismissRequest = { viewModel.clearEnvironmentalData() },
@@ -127,10 +189,19 @@ class MainActivity : AppCompatActivity() {
                         colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
                         elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp)
                     ) {
-                        Text(text = "OK")
+                        Text(text = "OK", color = Color(0xc0ffffff))
                     }
                 },
-                title = { Text(text = "📡 環境値") },
+                title = {
+                    Text(
+                        text = "📡 環境値",
+                        fontSize = 22.sp,
+                        lineHeight = 33.sp,
+                        color = Color(0xc0ffffff),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                },
                 text = {
                     Text(
                         text = String.format(
@@ -139,9 +210,13 @@ class MainActivity : AppCompatActivity() {
                             it.humidity,
                             it.pressure,
                             it.illuminance
-                        )
+                        ),
+                        fontSize = 18.sp,
+                        lineHeight = 27.sp,
+                        color = Color(0xc0ffffff)
                     )
                 },
+                backgroundColor = Color(0xFF1F2727),
                 properties = AndroidDialogProperties()
             )
         }

@@ -38,26 +38,37 @@ class MainViewModel : ViewModel() {
         .build()
         .create<APIService>()
 
-    internal val items = listOf(
-        RequestData("👀 SOURCE DIRECT") { sendAmp(AmpCommand.MODE_SOURCE_DIRECT) },
-        RequestData("🎯 COAXIAL") { sendAmp(AmpCommand.SELECT_COAXIAL) },
-        RequestData("🎯 RECORDER") { sendAmp(AmpCommand.SELECT_RECORDER) },
-        RequestData("🎯 TUNER") { sendAmp(AmpCommand.SELECT_TUNER) },
-        RequestData("🎯 NETWORK") { sendAmp(AmpCommand.SELECT_NETWORK) },
-        RequestData("🎯 CD") { sendAmp(AmpCommand.SELECT_CD) },
-        RequestData("🎯 PHONO") { sendAmp(AmpCommand.SELECT_PHONO) },
-        RequestData("🎯 OPTICAL") { sendAmp(AmpCommand.SELECT_OPTICAL) },
-        RequestData("🙈 ミュート") { sendAmp(AmpCommand.VOL_TOGGLE_MUTE) },
-        RequestData("🔼 ボリューム") { sendAmp(AmpCommand.VOL_UP) },
-        RequestData("🔽 ボリューム") { sendAmp(AmpCommand.VOL_DOWN) },
-        RequestData("🔌 アンプ電源") { sendAmp(AmpCommand.TOGGLE_POWER) },
-        RequestData("🌟 全灯") { sendCeilingLight(CeilingLightCommand.ALL_ON) },
-        RequestData("💡 点灯") { sendCeilingLight(CeilingLightCommand.ON) },
-        RequestData("🌚 常夜灯") { sendCeilingLight(CeilingLightCommand.NIGHT_ON) },
+    private val ceilingLightItems = listOf(
         RequestData("🌑 消灯") { sendCeilingLight(CeilingLightCommand.OFF) },
+        RequestData("🌚 常夜灯") { sendCeilingLight(CeilingLightCommand.NIGHT_ON) },
+        RequestData("💡 点灯") { sendCeilingLight(CeilingLightCommand.ON) },
+        RequestData("🌟 全灯") { sendCeilingLight(CeilingLightCommand.ALL_ON) },
     )
+    private val ampItems = listOf(
+        RequestData("🔽 ボリューム") { sendAmp(AmpCommand.VOL_DOWN) },
+        RequestData("🔼 ボリューム") { sendAmp(AmpCommand.VOL_UP) },
+        RequestData("🙈 ミュート") { sendAmp(AmpCommand.VOL_TOGGLE_MUTE) },
+        RequestData("🎯 OPTICAL") { sendAmp(AmpCommand.SELECT_OPTICAL) },
+        RequestData("🎯 PHONO") { sendAmp(AmpCommand.SELECT_PHONO) },
+        RequestData("🎯 CD") { sendAmp(AmpCommand.SELECT_CD) },
+        RequestData("🎯 NETWORK") { sendAmp(AmpCommand.SELECT_NETWORK) },
+        RequestData("🎯 TUNER") { sendAmp(AmpCommand.SELECT_TUNER) },
+        RequestData("🎯 RECORDER") { sendAmp(AmpCommand.SELECT_RECORDER) },
+        RequestData("🎯 COAXIAL") { sendAmp(AmpCommand.SELECT_COAXIAL) },
+        RequestData("🎙 SOURCE DIRECT") { sendAmp(AmpCommand.MODE_TOGGLE_SOURCE_DIRECT) },
+        RequestData("🔌 アンプ電源") { sendAmp(AmpCommand.TOGGLE_POWER) },
+    )
+    internal var items: List<RequestData> by mutableStateOf(ceilingLightItems)
 
     private var pendingRequest: Job? = null
+
+    internal fun showCeilingLightItems() {
+        items = ceilingLightItems
+    }
+
+    internal fun showAmpItems() {
+        items = ampItems
+    }
 
     private fun cancelPendingRequest() {
         pendingRequest?.cancel()
