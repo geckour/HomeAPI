@@ -1,124 +1,149 @@
 package com.geckour.homeapi.ui
 
 import android.os.Bundle
-import android.view.HapticFeedbackConstants
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.DataBindingUtil
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement.Bottom
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Divider
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Snackbar
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.AmbientHapticFeedback
+import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.AndroidDialogProperties
 import com.geckour.homeapi.R
-import com.geckour.homeapi.databinding.ActivityMainBinding
-import com.geckour.homeapi.databinding.ItemRequestBinding
 import com.geckour.homeapi.model.RequestData
-import com.google.android.material.snackbar.Snackbar
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        binding.recyclerView.apply {
-            val linearLayoutManager = LinearLayoutManager(
-                this@MainActivity,
-                LinearLayoutManager.VERTICAL,
-                false
-            ).apply { stackFromEnd = true }
-
-            layoutManager = linearLayoutManager
-            addItemDecoration(DividerItemDecoration(this@MainActivity, linearLayoutManager.orientation))
-
-            adapter = Adapter(viewModel.items)
-        }
-        binding.requestEnvironmental.setOnClickListener {
-            viewModel.requestEnvironmentalData()
-            it.haptic()
-        }
-        binding.loadingIndicator.setOnClickListener {
-            viewModel.cancelPendingRequest()
-            toggleLoadingIndicator(false)
-        }
-
-        viewModel.data.observe(this) {
-            toggleLoadingIndicator(it.isLoading)
-
-            it.error?.let { t ->
-                Snackbar.make(binding.root, t.message.orEmpty(), Snackbar.LENGTH_INDEFINITE)
-                    .setAction("OK") {}
-                    .show()
-            }
-
-            it.environmentalData?.let { data ->
-                AlertDialog
-                    .Builder(this, R.style.Theme_HomeAPI_AlertDialog)
-                    .setTitle("📡 環境値")
-                    .setMessage(
-                        String.format(
-                            "🌡 %.2f [℃]\n💧 %.2f [%%]\n🌪 %.2f [hPa]\n💡 %.2f [lux]",
-                            data.temperature,
-                            data.humidity,
-                            data.pressure,
-                            data.illuminance
-                        )
-                    )
-                    .setCancelable(true)
-                    .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-                    .show()
-            }
-        }
-    }
-
-    private fun toggleLoadingIndicator(visibility: Boolean) {
-        binding.loadingIndicator.visibility = if (visibility) View.VISIBLE else View.GONE
-    }
-
-    private class Adapter(private val items: List<RequestData>) : RecyclerView.Adapter<Adapter.ViewHolder>() {
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
-            ViewHolder(
-                DataBindingUtil.inflate(
-                    LayoutInflater.from(parent.context),
-                    R.layout.item_request,
-                    parent,
-                    false
-                )
-            )
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            holder.onBind(items[holder.adapterPosition])
-        }
-
-        override fun getItemCount(): Int = items.size
-
-        private class ViewHolder(private val binding: ItemRequestBinding) : RecyclerView.ViewHolder(binding.root) {
-
-            fun onBind(item: RequestData) {
-                binding.apply {
-                    requestData = item
-                    item.onClick?.let { onClick ->
-                        root.setOnClickListener {
-                            onClick()
-                            it.haptic()
+        setContent {
+            MaterialTheme {
+                Column(verticalArrangement = Bottom, modifier = Modifier.fillMaxSize(1f)) {
+                    LazyColumn(verticalArrangement = Bottom, modifier = Modifier.weight(1f)) {
+                        items(viewModel.items) { item -> Item(item = item) }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .align(Alignment.CenterHorizontally)
+                    ) {
+                        Button(
+                            onClick = {
+                                viewModel.requestEnvironmentalData()
+                                AmbientHapticFeedback
+                            },
+                            colors = ButtonDefaults.buttonColors(backgroundColor = Color(getColor(R.color.teal_700))),
+                        ) {
+                            Text(text = getString(R.string.request_environmental), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
                     }
                 }
+
+                Loading()
+                Error()
+
+                Environmental()
             }
         }
     }
-}
 
-private fun View.haptic() {
-    performHapticFeedback(
-        HapticFeedbackConstants.CONTEXT_CLICK,
-        HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING or HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING
-    )
+    @Composable
+    fun Item(item: RequestData) {
+        Divider(color = Color(0x18ffffff))
+        Button(
+            onClick = item.onClick,
+            modifier = Modifier.fillMaxSize(1f),
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
+            elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp),
+            shape = RectangleShape,
+            contentPadding = PaddingValues(16.dp)
+        ) {
+            Text(
+                text = item.name,
+                modifier = Modifier.fillMaxWidth(1f),
+                textAlign = TextAlign.Start,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                color = Color(0xc0ffffff)
+            )
+        }
+    }
+
+    @Composable
+    fun Loading() {
+        if (viewModel.data.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(1f)
+                    .background(color = Color(0x80000000))
+            ) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+        }
+    }
+
+    @Composable
+    fun Error() {
+        viewModel.data.error?.let {
+            Snackbar { Text(text = it.message.orEmpty()) }
+        }
+    }
+
+    @Composable
+    fun Environmental() {
+        viewModel.data.environmentalData?.let {
+            AlertDialog(
+                onDismissRequest = { viewModel.clearEnvironmentalData() },
+                confirmButton = {
+                    Button(
+                        onClick = { viewModel.clearEnvironmentalData() },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
+                        elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp)
+                    ) {
+                        Text(text = "OK")
+                    }
+                },
+                title = { Text(text = "📡 環境値") },
+                text = {
+                    Text(
+                        text = String.format(
+                            "🌡 %.2f [℃]\n💧 %.2f [%%]\n🌪 %.2f [hPa]\n💡 %.2f [lux]",
+                            it.temperature,
+                            it.humidity,
+                            it.pressure,
+                            it.illuminance
+                        )
+                    )
+                },
+                properties = AndroidDialogProperties()
+            )
+        }
+    }
 }

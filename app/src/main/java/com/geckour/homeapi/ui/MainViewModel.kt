@@ -1,9 +1,9 @@
 package com.geckour.homeapi.ui
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.distinctUntilChanged
 import androidx.lifecycle.viewModelScope
 import com.facebook.stetho.okhttp3.StethoInterceptor
 import com.geckour.homeapi.api.APIService
@@ -25,8 +25,8 @@ import timber.log.Timber
 
 class MainViewModel : ViewModel() {
 
-    private val _data = MutableLiveData<MainData>()
-    internal val data: LiveData<MainData> = _data.distinctUntilChanged()
+    internal var data: MainData by mutableStateOf(MainData())
+        private set
 
     private val okHttpClient = OkHttpClient.Builder().addNetworkInterceptor(StethoInterceptor()).build()
 
@@ -51,7 +51,6 @@ class MainViewModel : ViewModel() {
         RequestData("🔼 ボリューム") { sendAmp(AmpCommand.VOL_UP) },
         RequestData("🔽 ボリューム") { sendAmp(AmpCommand.VOL_DOWN) },
         RequestData("🔌 アンプ電源") { sendAmp(AmpCommand.TOGGLE_POWER) },
-        RequestData(null),
         RequestData("🌟 全灯") { sendCeilingLight(CeilingLightCommand.ALL_ON) },
         RequestData("💡 点灯") { sendCeilingLight(CeilingLightCommand.ON) },
         RequestData("🌚 常夜灯") { sendCeilingLight(CeilingLightCommand.NIGHT_ON) },
@@ -60,45 +59,48 @@ class MainViewModel : ViewModel() {
 
     private var pendingRequest: Job? = null
 
-    internal fun cancelPendingRequest() {
+    private fun cancelPendingRequest() {
         pendingRequest?.cancel()
     }
 
     private fun onFailure(throwable: Throwable) {
         if (throwable is CancellationException) return
 
-        _data.value = MainData(error = throwable)
+        data = MainData(error = throwable)
         Timber.e(throwable)
     }
 
     private fun sendCeilingLight(command: CeilingLightCommand) {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
-            _data.value = MainData(isLoading = true)
+            data = MainData(isLoading = true)
             runCatching { apiService.ceilingLight(command.rawValue) }
+                .onSuccess { data = MainData() }
                 .onFailure { onFailure(it) }
-                .also { _data.value = (_data.value ?: MainData()).copy(isLoading = false) }
         }
     }
 
     internal fun requestEnvironmentalData() {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
-            _data.value = MainData(isLoading = true)
+            data = MainData(isLoading = true)
             kotlin.runCatching { apiService.getEnvironmentalData() }
                 .onFailure { onFailure(it) }
-                .onSuccess { _data.value = MainData(environmentalData = it.data) }
-                .also { _data.value = (_data.value ?: MainData()).copy(isLoading = false) }
+                .onSuccess { data = MainData(environmentalData = it.data) }
         }
+    }
+
+    internal fun clearEnvironmentalData() {
+        data = MainData()
     }
 
     private fun sendAmp(command: AmpCommand) {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
-            _data.value = MainData(isLoading = true)
+            data = MainData(isLoading = true)
             runCatching { apiService.amp(command.rawValue) }
+                .onSuccess { data = MainData() }
                 .onFailure { onFailure(it) }
-                .also { _data.value = (_data.value ?: MainData()).copy(isLoading = false) }
         }
     }
 

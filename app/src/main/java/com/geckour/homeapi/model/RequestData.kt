@@ -1,6 +1,6 @@
 package com.geckour.homeapi.model
 
 data class RequestData(
-    val name: String?,
-    val onClick: (() -> Unit)? = null
+    val name: String,
+    val onClick: () -> Unit
 )
