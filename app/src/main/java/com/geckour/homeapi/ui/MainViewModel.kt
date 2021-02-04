@@ -58,17 +58,9 @@ class MainViewModel : ViewModel() {
         RequestData("🎙 SOURCE DIRECT") { sendAmp(AmpCommand.MODE_TOGGLE_SOURCE_DIRECT) },
         RequestData("🔌 アンプ電源") { sendAmp(AmpCommand.TOGGLE_POWER) },
     )
-    internal var items: List<RequestData> by mutableStateOf(ceilingLightItems)
+    internal val items = mapOf(Screen.CEILING_LIGHT to ceilingLightItems, Screen.AMP to ampItems)
 
     private var pendingRequest: Job? = null
-
-    internal fun showCeilingLightItems() {
-        items = ceilingLightItems
-    }
-
-    internal fun showAmpItems() {
-        items = ampItems
-    }
 
     private fun cancelPendingRequest() {
         pendingRequest?.cancel()
@@ -120,4 +112,9 @@ class MainViewModel : ViewModel() {
         val isLoading: Boolean = false,
         val error: Throwable? = null,
     )
+
+    enum class Screen(val title: String) {
+        CEILING_LIGHT("天井灯"),
+        AMP("アンプ")
+    }
 }
