@@ -16,9 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
@@ -90,8 +88,9 @@ class MainActivity : AppCompatActivity() {
             backgroundColor = Color.Transparent,
             contentColor = Color(0xc0ffffff)
         ) {
-            ScreenTab(screen = MainViewModel.Screen.CEILING_LIGHT, currentScreen = currentScreen)
-            ScreenTab(screen = MainViewModel.Screen.AMP, currentScreen = currentScreen)
+            viewModel.items.keys.forEach {
+                ScreenTab(screen = it, currentScreen = currentScreen)
+            }
         }
     }
 

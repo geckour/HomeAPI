@@ -28,16 +28,6 @@ class MainViewModel : ViewModel() {
     internal var data: MainData by mutableStateOf(MainData())
         private set
 
-    private val okHttpClient = OkHttpClient.Builder().addNetworkInterceptor(StethoInterceptor()).build()
-
-    @OptIn(ExperimentalSerializationApi::class)
-    private val apiService = Retrofit.Builder()
-        .client(okHttpClient)
-        .baseUrl("http://192.168.10.101:3000")
-        .addConverterFactory(Json.asConverterFactory(MediaType.get("application/json")))
-        .build()
-        .create<APIService>()
-
     private val ceilingLightItems = listOf(
         RequestData("🌑 消灯") { sendCeilingLight(CeilingLightCommand.OFF) },
         RequestData("🌚 常夜灯") { sendCeilingLight(CeilingLightCommand.NIGHT_ON) },
@@ -45,9 +35,9 @@ class MainViewModel : ViewModel() {
         RequestData("🌟 全灯") { sendCeilingLight(CeilingLightCommand.ALL_ON) },
     )
     private val ampItems = listOf(
-        RequestData("🔽 ボリューム") { sendAmp(AmpCommand.VOL_DOWN) },
-        RequestData("🔼 ボリューム") { sendAmp(AmpCommand.VOL_UP) },
-        RequestData("🙈 ミュート") { sendAmp(AmpCommand.VOL_TOGGLE_MUTE) },
+        RequestData("➖ ボリューム減") { sendAmp(AmpCommand.VOL_DOWN) },
+        RequestData("➕ ボリューム増") { sendAmp(AmpCommand.VOL_UP) },
+        RequestData("🙉 ミュート") { sendAmp(AmpCommand.VOL_TOGGLE_MUTE) },
         RequestData("🎯 OPTICAL") { sendAmp(AmpCommand.SELECT_OPTICAL) },
         RequestData("🎯 PHONO") { sendAmp(AmpCommand.SELECT_PHONO) },
         RequestData("🎯 CD") { sendAmp(AmpCommand.SELECT_CD) },
@@ -60,8 +50,18 @@ class MainViewModel : ViewModel() {
     )
     internal val items = mapOf(
         Screen.CEILING_LIGHT to ceilingLightItems,
-        Screen.AMP to ampItems
+        Screen.AMP to ampItems,
     )
+
+    private val okHttpClient = OkHttpClient.Builder().addNetworkInterceptor(StethoInterceptor()).build()
+
+    @OptIn(ExperimentalSerializationApi::class)
+    private val apiService = Retrofit.Builder()
+        .client(okHttpClient)
+        .baseUrl("http://192.168.10.101:3000")
+        .addConverterFactory(Json.asConverterFactory(MediaType.get("application/json")))
+        .build()
+        .create<APIService>()
 
     private var pendingRequest: Job? = null
 
@@ -118,6 +118,6 @@ class MainViewModel : ViewModel() {
 
     enum class Screen(val title: String) {
         CEILING_LIGHT("天井灯"),
-        AMP("アンプ")
+        AMP("アンプ"),
     }
 }
