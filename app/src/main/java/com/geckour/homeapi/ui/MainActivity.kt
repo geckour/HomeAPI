@@ -14,9 +14,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -70,16 +73,31 @@ class MainActivity : AppCompatActivity() {
 
             LazyColumn(modifier = Modifier.weight(1f), reverseLayout = true) {
                 viewModel.items[currentScreen.value]?.let {
-                    items(it) { item -> Item(item = item) }
+                    itemsIndexed(it) { i, item -> Item(item = item, i == 0) }
                 }
             }
-            Tabs(currentScreen)
             Environmental()
+            Tabs(currentScreen)
         }
     }
 
     @Composable
-    fun Item(item: RequestData) {
+    fun Tabs(currentScreen: MutableState<MainViewModel.Screen>) {
+        TabRow(
+            modifier = Modifier.fillMaxWidth(),
+            selectedTabIndex = MainViewModel.Screen.valueOf(currentScreen.value.name).ordinal,
+            divider = {},
+            backgroundColor = Color.Transparent,
+            contentColor = Color(0xc0ffffff)
+        ) {
+            ScreenTab(screen = MainViewModel.Screen.CEILING_LIGHT, currentScreen = currentScreen)
+            ScreenTab(screen = MainViewModel.Screen.AMP, currentScreen = currentScreen)
+        }
+    }
+
+    @Composable
+    fun Item(item: RequestData, first: Boolean) {
+        if (first.not()) Divider(color = Color(0x20ffffff))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -103,21 +121,6 @@ class MainActivity : AppCompatActivity() {
                 color = Color(0xc0ffffff)
             )
         }
-        Divider(color = Color(0x20ffffff))
-    }
-
-    @Composable
-    fun Tabs(currentScreen: MutableState<MainViewModel.Screen>) {
-        Divider(color = Color(0xff018786))
-        TabRow(
-            modifier = Modifier.fillMaxWidth(),
-            selectedTabIndex = MainViewModel.Screen.valueOf(currentScreen.value.name).ordinal,
-            backgroundColor = Color.Transparent,
-            contentColor = Color(0xc0ffffff)
-        ) {
-            ScreenTab(screen = MainViewModel.Screen.CEILING_LIGHT, currentScreen = currentScreen)
-            ScreenTab(screen = MainViewModel.Screen.AMP, currentScreen = currentScreen)
-        }
     }
 
     @Composable
@@ -128,7 +131,13 @@ class MainActivity : AppCompatActivity() {
                 currentScreen.value = screen
                 haptic()
             },
-            text = { Text(text = screen.title, fontWeight = FontWeight.Bold) }
+            text = {
+                Text(
+                    text = screen.title,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            modifier = Modifier.height(56.dp)
         )
     }
 
@@ -136,7 +145,7 @@ class MainActivity : AppCompatActivity() {
     fun Environmental() {
         Box(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(vertical = 20.dp)
                 .fillMaxWidth()
         ) {
             Button(
