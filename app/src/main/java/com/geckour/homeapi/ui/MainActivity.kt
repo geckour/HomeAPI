@@ -54,23 +54,27 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             MaterialTheme {
-                Column(verticalArrangement = Bottom, modifier = Modifier.fillMaxSize()) {
-                    val currentScreen = mutableStateOf(MainViewModel.Screen.CEILING_LIGHT)
-
-                    LazyColumn(modifier = Modifier.weight(1f), reverseLayout = true) {
-                        viewModel.items[currentScreen.value]?.let {
-                            items(it) { item -> Item(item = item) }
-                        }
-                    }
-                    Tabs(currentScreen)
-                    Environmental()
-                }
-
+                Contents()
                 Loading()
                 Error()
 
                 EnvironmentalDialog()
             }
+        }
+    }
+
+    @Composable
+    fun Contents() {
+        Column(verticalArrangement = Bottom, modifier = Modifier.fillMaxSize()) {
+            val currentScreen = mutableStateOf(MainViewModel.Screen.CEILING_LIGHT)
+
+            LazyColumn(modifier = Modifier.weight(1f), reverseLayout = true) {
+                viewModel.items[currentScreen.value]?.let {
+                    items(it) { item -> Item(item = item) }
+                }
+            }
+            Tabs(currentScreen)
+            Environmental()
         }
     }
 
