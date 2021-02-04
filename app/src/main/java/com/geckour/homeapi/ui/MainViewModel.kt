@@ -58,7 +58,10 @@ class MainViewModel : ViewModel() {
         RequestData("🎙 SOURCE DIRECT") { sendAmp(AmpCommand.MODE_TOGGLE_SOURCE_DIRECT) },
         RequestData("🔌 アンプ電源") { sendAmp(AmpCommand.TOGGLE_POWER) },
     )
-    internal val items = mapOf(Screen.CEILING_LIGHT to ceilingLightItems, Screen.AMP to ampItems)
+    internal val items = mapOf(
+        Screen.CEILING_LIGHT to ceilingLightItems,
+        Screen.AMP to ampItems
+    )
 
     private var pendingRequest: Job? = null
 

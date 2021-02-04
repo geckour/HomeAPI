@@ -11,7 +11,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.Bottom
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayout
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -103,7 +102,6 @@ class MainActivity : AppCompatActivity() {
         Divider(color = Color(0x20ffffff))
     }
 
-    @OptIn(ExperimentalLayout::class)
     @Composable
     fun Tabs(currentScreen: MutableState<MainViewModel.Screen>) {
         Divider(color = Color(0xff018786))
