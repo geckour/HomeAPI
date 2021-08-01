@@ -192,7 +192,7 @@ class MainActivity : ComponentActivity() {
                         textAlign = TextAlign.End,
                         fontWeight = FontWeight.Bold,
                         fontSize = 10.sp,
-                        lineHeight = 18.sp,
+                        lineHeight = 12.sp,
                         color = Color(0xc0ffffff)
                     )
                 }
