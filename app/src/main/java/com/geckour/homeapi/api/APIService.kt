@@ -46,4 +46,6 @@ enum class AmpCommand(val rawValue: String) {
     SELECT_RECORDER("amp_select_recorder"),
     SELECT_COAXIAL("amp_select_coaxial"),
     MODE_TOGGLE_SOURCE_DIRECT("amp_mode_toggle_source-direct"),
+    SELECT_SPDIF_1("spdif_select_1"),
+    SELECT_SPDIF_2("spdif_select_2"),
 }

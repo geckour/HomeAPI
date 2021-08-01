@@ -29,24 +29,26 @@ class MainViewModel : ViewModel() {
         private set
 
     private val ceilingLightItems = listOf(
-        RequestData("🌑 消灯") { sendCeilingLight(CeilingLightCommand.OFF) },
-        RequestData("🌚 常夜灯") { sendCeilingLight(CeilingLightCommand.NIGHT_ON) },
-        RequestData("💡 点灯") { sendCeilingLight(CeilingLightCommand.ON) },
-        RequestData("🌟 全灯") { sendCeilingLight(CeilingLightCommand.ALL_ON) },
+        RequestData("🌑", "消灯") { sendCeilingLight(CeilingLightCommand.OFF) },
+        RequestData("🌚", "常夜灯") { sendCeilingLight(CeilingLightCommand.NIGHT_ON) },
+        RequestData("💡", "点灯") { sendCeilingLight(CeilingLightCommand.ON) },
+        RequestData("🌟", "全灯") { sendCeilingLight(CeilingLightCommand.ALL_ON) },
     )
     private val ampItems = listOf(
-        RequestData("🐜 ボリューム減") { sendAmp(AmpCommand.VOL_DOWN) },
-        RequestData("🦍 ボリューム増") { sendAmp(AmpCommand.VOL_UP) },
-        RequestData("🙉 ミュート") { sendAmp(AmpCommand.VOL_TOGGLE_MUTE) },
-        RequestData("💡 OPTICAL") { sendAmp(AmpCommand.SELECT_OPTICAL) },
-        RequestData("🍥 PHONO") { sendAmp(AmpCommand.SELECT_PHONO) },
-        RequestData("💿 CD") { sendAmp(AmpCommand.SELECT_CD) },
-        RequestData("🕸 NETWORK") { sendAmp(AmpCommand.SELECT_NETWORK) },
-        RequestData("📻 TUNER") { sendAmp(AmpCommand.SELECT_TUNER) },
-        RequestData("📽 RECORDER") { sendAmp(AmpCommand.SELECT_RECORDER) },
-        RequestData("⚡ COAXIAL") { sendAmp(AmpCommand.SELECT_COAXIAL) },
-        RequestData("🍣 SOURCE DIRECT") { sendAmp(AmpCommand.MODE_TOGGLE_SOURCE_DIRECT) },
-        RequestData("🔌 アンプ電源") { sendAmp(AmpCommand.TOGGLE_POWER) },
+        RequestData("✌️", "S/PDIF 2") { sendAmp(AmpCommand.SELECT_SPDIF_2) },
+        RequestData("☝️", "S/PDIF 1") { sendAmp(AmpCommand.SELECT_SPDIF_1) },
+        RequestData("🦍", "ボリューム増") { sendAmp(AmpCommand.VOL_UP) },
+        RequestData("🐜", "ボリューム減") { sendAmp(AmpCommand.VOL_DOWN) },
+        RequestData("🙉", "ミュート") { sendAmp(AmpCommand.VOL_TOGGLE_MUTE) },
+        RequestData("🍥", "PHONO") { sendAmp(AmpCommand.SELECT_PHONO) },
+        RequestData("💿", "CD") { sendAmp(AmpCommand.SELECT_CD) },
+        RequestData("🕸", "NETWORK") { sendAmp(AmpCommand.SELECT_NETWORK) },
+        RequestData("📻", "TUNER") { sendAmp(AmpCommand.SELECT_TUNER) },
+        RequestData("📽", "RECORDER") { sendAmp(AmpCommand.SELECT_RECORDER) },
+        RequestData("💡", "OPTICAL") { sendAmp(AmpCommand.SELECT_OPTICAL) },
+        RequestData("⚡", "COAXIAL") { sendAmp(AmpCommand.SELECT_COAXIAL) },
+        RequestData("🍣", "SOURCE DIRECT") { sendAmp(AmpCommand.MODE_TOGGLE_SOURCE_DIRECT) },
+        RequestData("🔌", "アンプ電源") { sendAmp(AmpCommand.TOGGLE_POWER) },
     )
     internal val items = mapOf(
         Screen.CEILING_LIGHT to ceilingLightItems,
