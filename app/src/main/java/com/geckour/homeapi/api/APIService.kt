@@ -31,6 +31,10 @@ enum class CeilingLightCommand(val rawValue: String) {
     ON("ceiling-light_on"),
     NIGHT_ON("ceiling-light_night-on"),
     OFF("ceiling-light_off"),
+    WARMER("ceiling-light_warmer"),
+    COOLER("ceiling-light_cooler"),
+    BRIGHTER("ceiling-light_brighter"),
+    DARKER("ceiling-light_darker"),
 }
 
 enum class AmpCommand(val rawValue: String) {
