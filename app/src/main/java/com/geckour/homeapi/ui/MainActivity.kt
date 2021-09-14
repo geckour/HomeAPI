@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 MainViewModel.Screen.AMP -> {
-                    val count = 4
+                    val spanCount = 4
                     var size by mutableStateOf(IntSize.Zero)
                     LazyColumn(
                         modifier = Modifier
@@ -95,11 +95,11 @@ class MainActivity : ComponentActivity() {
                             .onGloballyPositioned { layoutCoordinates -> size = layoutCoordinates.size },
                         reverseLayout = true
                     ) {
-                        viewModel.items[currentScreen]?.chunked(count)?.let {
+                        viewModel.items[currentScreen]?.chunked(spanCount)?.let {
                             items(it) { item ->
                                 GridItem(
                                     items = item.reversed(),
-                                    sideLength = with(LocalDensity.current) { (size.width / count).toDp() }
+                                    sideLength = with(LocalDensity.current) { (size.width / spanCount).toDp() }
                                 )
                             }
                         }
