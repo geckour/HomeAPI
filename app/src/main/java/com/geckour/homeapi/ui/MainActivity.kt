@@ -136,8 +136,9 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(
+                    enabled = item.onClick != null,
                     onClick = {
-                        item.onClick()
+                        item.onClick?.invoke()
                         haptic()
                     },
                     indication = rememberRipple(color = Color(0xc0ffffff)),
@@ -166,8 +167,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier
                         .size(sideLength)
                         .clickable(
+                            enabled = item.onClick != null,
                             onClick = {
-                                item.onClick()
+                                item.onClick?.invoke()
                                 haptic()
                             },
                             indication = rememberRipple(color = Color(0xc0ffffff)),
