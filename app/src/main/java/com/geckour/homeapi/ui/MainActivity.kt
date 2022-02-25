@@ -88,6 +88,13 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+                MainViewModel.Screen.AIR_COND -> {
+                    LazyColumn(modifier = Modifier.weight(1f), reverseLayout = true) {
+                        viewModel.items[currentScreen]?.let {
+                            itemsIndexed(it) { i, item -> ListItem(item = item, i == 0) }
+                        }
+                    }
+                }
                 MainViewModel.Screen.AMP -> {
                     val spanCount = 4
                     var size by mutableStateOf(IntSize.Zero)

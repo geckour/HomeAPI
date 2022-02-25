@@ -2,7 +2,6 @@ package com.geckour.homeapi.api
 
 import com.geckour.homeapi.api.model.Data
 import com.geckour.homeapi.api.model.EnvironmentalData
-import okhttp3.ResponseBody
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
@@ -20,6 +19,12 @@ interface APIService {
     suspend fun getEnvironmentalData(): Data<EnvironmentalData>
 
     @FormUrlEncoded
+    @POST("air-cond")
+    suspend fun airCond(
+        @Field("command") command: String
+    )
+
+    @FormUrlEncoded
     @POST("amp")
     suspend fun amp(
         @Field("command") command: String
@@ -27,6 +32,7 @@ interface APIService {
 }
 
 enum class CeilingLightCommand(val rawValue: String) {
+    HIGH("ceiling-light_high"),
     ALL_ON("ceiling-light_all-on"),
     ON("ceiling-light_on"),
     NIGHT_ON("ceiling-light_night-on"),
@@ -35,6 +41,11 @@ enum class CeilingLightCommand(val rawValue: String) {
     COOLER("ceiling-light_cooler"),
     BRIGHTER("ceiling-light_brighter"),
     DARKER("ceiling-light_darker"),
+}
+
+enum class AirCondCommand(val rawValue: String) {
+    HEATER("air-cond_heater"),
+    STOP("air-cond_stop"),
 }
 
 enum class AmpCommand(val rawValue: String) {
@@ -52,4 +63,6 @@ enum class AmpCommand(val rawValue: String) {
     MODE_TOGGLE_SOURCE_DIRECT("amp_mode_toggle_source-direct"),
     SELECT_SPDIF_1("spdif_select_1"),
     SELECT_SPDIF_2("spdif_select_2"),
+    SELECT_SPDIF_3("spdif_select_3"),
+    SELECT_SPDIF_4("spdif_select_4"),
 }

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facebook.stetho.okhttp3.StethoInterceptor
 import com.geckour.homeapi.api.APIService
+import com.geckour.homeapi.api.AirCondCommand
 import com.geckour.homeapi.api.AmpCommand
 import com.geckour.homeapi.api.CeilingLightCommand
 import com.geckour.homeapi.api.model.EnvironmentalData
@@ -33,17 +34,26 @@ class MainViewModel : ViewModel() {
         RequestData("🌚", "常夜灯") { sendCeilingLight(CeilingLightCommand.NIGHT_ON) },
         RequestData("💡", "点灯") { sendCeilingLight(CeilingLightCommand.ON) },
         RequestData("🌟", "全灯") { sendCeilingLight(CeilingLightCommand.ALL_ON) },
+        RequestData("💥", "全灯 (強)") { sendCeilingLight(CeilingLightCommand.HIGH) },
         RequestData("", "", null),
         RequestData("🏙", "寒色") { sendCeilingLight(CeilingLightCommand.COOLER) },
         RequestData("🌇", "暖色") { sendCeilingLight(CeilingLightCommand.WARMER) },
         RequestData("🌥", "暗く") { sendCeilingLight(CeilingLightCommand.DARKER) },
         RequestData("☀️", "明るく") { sendCeilingLight(CeilingLightCommand.BRIGHTER) },
     )
+    private val airCondItems = listOf(
+        RequestData("🌚", "停止") { sendAirCond(AirCondCommand.STOP) },
+        RequestData("🏮", "暖房") { sendAirCond(AirCondCommand.HEATER) },
+    )
     private val ampItems = listOf(
-        RequestData("🐘", "ボリューム増") { sendAmp(AmpCommand.VOL_UP) },
-        RequestData("🐜", "ボリューム減") { sendAmp(AmpCommand.VOL_DOWN) },
+        RequestData("🖖", "S/PDIF 4") { sendAmp(AmpCommand.SELECT_SPDIF_4) },
+        RequestData("🤟", "S/PDIF 3") { sendAmp(AmpCommand.SELECT_SPDIF_3) },
         RequestData("✌️", "S/PDIF 2") { sendAmp(AmpCommand.SELECT_SPDIF_2) },
         RequestData("☝️", "S/PDIF 1") { sendAmp(AmpCommand.SELECT_SPDIF_1) },
+        RequestData("🐘", "ボリューム増") { sendAmp(AmpCommand.VOL_UP) },
+        RequestData("🐜", "ボリューム減") { sendAmp(AmpCommand.VOL_DOWN) },
+        RequestData("🙉", "ミュート") { sendAmp(AmpCommand.VOL_TOGGLE_MUTE) },
+        RequestData("🔌", "アンプ電源") { sendAmp(AmpCommand.TOGGLE_POWER) },
         RequestData("💡", "OPTICAL") { sendAmp(AmpCommand.SELECT_OPTICAL) },
         RequestData("⚡", "COAXIAL") { sendAmp(AmpCommand.SELECT_COAXIAL) },
         RequestData("📽", "RECORDER") { sendAmp(AmpCommand.SELECT_RECORDER) },
@@ -52,11 +62,10 @@ class MainViewModel : ViewModel() {
         RequestData("💿", "CD") { sendAmp(AmpCommand.SELECT_CD) },
         RequestData("🍥", "PHONO") { sendAmp(AmpCommand.SELECT_PHONO) },
         RequestData("🍣", "SOURCE DIRECT") { sendAmp(AmpCommand.MODE_TOGGLE_SOURCE_DIRECT) },
-        RequestData("🙉", "ミュート") { sendAmp(AmpCommand.VOL_TOGGLE_MUTE) },
-        RequestData("🔌", "アンプ電源") { sendAmp(AmpCommand.TOGGLE_POWER) },
     )
     internal val items = mapOf(
         Screen.CEILING_LIGHT to ceilingLightItems,
+        Screen.AIR_COND to airCondItems,
         Screen.AMP to ampItems,
     )
 
@@ -107,6 +116,16 @@ class MainViewModel : ViewModel() {
         data = MainData()
     }
 
+    private fun sendAirCond(command: AirCondCommand) {
+        cancelPendingRequest()
+        pendingRequest = viewModelScope.launch {
+            data = MainData(isLoading = true)
+            runCatching { apiService.airCond(command.rawValue) }
+                .onSuccess { data = MainData() }
+                .onFailure { onFailure(it) }
+        }
+    }
+
     private fun sendAmp(command: AmpCommand) {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
@@ -125,6 +144,7 @@ class MainViewModel : ViewModel() {
 
     enum class Screen(val title: String) {
         CEILING_LIGHT("天井灯"),
+        AIR_COND("エアコン"),
         AMP("アンプ"),
     }
 }
