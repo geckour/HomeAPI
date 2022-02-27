@@ -1,13 +1,14 @@
 package com.geckour.homeapi.ui
 
+import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.facebook.stetho.okhttp3.StethoInterceptor
 import com.geckour.homeapi.api.APIService
-import com.geckour.homeapi.api.AirCondCommand
 import com.geckour.homeapi.api.AmpCommand
 import com.geckour.homeapi.api.CeilingLightCommand
 import com.geckour.homeapi.api.model.EnvironmentalData
@@ -24,9 +25,14 @@ import retrofit2.Retrofit
 import retrofit2.create
 import timber.log.Timber
 
-class MainViewModel : ViewModel() {
+class MainViewModel(private val sharedPreferences: SharedPreferences) : ViewModel() {
 
-    internal var data: MainData by mutableStateOf(MainData())
+    companion object {
+
+        private const val PREF_KEY_TEMPERATURE = "pref_key_temperature"
+    }
+
+    internal var data: MainData by mutableStateOf(MainData(temperature = sharedPreferences.getFloat(PREF_KEY_TEMPERATURE, 20f)))
         private set
 
     private val ceilingLightItems = listOf(
@@ -42,18 +48,21 @@ class MainViewModel : ViewModel() {
         RequestData("☀️", "明るく") { sendCeilingLight(CeilingLightCommand.BRIGHTER) },
     )
     private val airCondItems = listOf(
-        RequestData("🌚", "停止") { sendAirCond(AirCondCommand.STOP) },
-        RequestData("🏮", "暖房") { sendAirCond(AirCondCommand.HEATER) },
+        RequestData("🌚", "停止") { sendAirCond(0) },
+        RequestData("🏜", "除湿") { sendAirCond(2) },
+        RequestData("🆒", "冷房") { sendAirCond(3) },
+        RequestData("🏮", "暖房") { sendAirCond(4) },
+        RequestData("🌬", "送風") { sendAirCond(6) },
     )
     private val ampItems = listOf(
-        RequestData("🖖", "S/PDIF 4") { sendAmp(AmpCommand.SELECT_SPDIF_4) },
-        RequestData("🤟", "S/PDIF 3") { sendAmp(AmpCommand.SELECT_SPDIF_3) },
-        RequestData("✌️", "S/PDIF 2") { sendAmp(AmpCommand.SELECT_SPDIF_2) },
-        RequestData("☝️", "S/PDIF 1") { sendAmp(AmpCommand.SELECT_SPDIF_1) },
         RequestData("🐘", "ボリューム増") { sendAmp(AmpCommand.VOL_UP) },
         RequestData("🐜", "ボリューム減") { sendAmp(AmpCommand.VOL_DOWN) },
         RequestData("🙉", "ミュート") { sendAmp(AmpCommand.VOL_TOGGLE_MUTE) },
         RequestData("🔌", "アンプ電源") { sendAmp(AmpCommand.TOGGLE_POWER) },
+        RequestData("🖖", "S/PDIF 4") { sendAmp(AmpCommand.SELECT_SPDIF_4) },
+        RequestData("🤟", "S/PDIF 3") { sendAmp(AmpCommand.SELECT_SPDIF_3) },
+        RequestData("✌️", "S/PDIF 2") { sendAmp(AmpCommand.SELECT_SPDIF_2) },
+        RequestData("☝️", "S/PDIF 1") { sendAmp(AmpCommand.SELECT_SPDIF_1) },
         RequestData("💡", "OPTICAL") { sendAmp(AmpCommand.SELECT_OPTICAL) },
         RequestData("⚡", "COAXIAL") { sendAmp(AmpCommand.SELECT_COAXIAL) },
         RequestData("📽", "RECORDER") { sendAmp(AmpCommand.SELECT_RECORDER) },
@@ -88,16 +97,16 @@ class MainViewModel : ViewModel() {
     private fun onFailure(throwable: Throwable) {
         if (throwable is CancellationException) return
 
-        data = MainData(error = throwable)
+        data = data.copy(isLoading = false, error = throwable)
         Timber.e(throwable)
     }
 
     private fun sendCeilingLight(command: CeilingLightCommand) {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
-            data = MainData(isLoading = true)
+            data = data.copy(isLoading = true, error = null)
             runCatching { apiService.ceilingLight(command.rawValue) }
-                .onSuccess { data = MainData() }
+                .onSuccess { data = data.copy(isLoading = false) }
                 .onFailure { onFailure(it) }
         }
     }
@@ -105,23 +114,36 @@ class MainViewModel : ViewModel() {
     internal fun requestEnvironmentalData() {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
-            data = MainData(isLoading = true)
+            data = data.copy(isLoading = true, error = null)
             kotlin.runCatching { apiService.getEnvironmentalData() }
                 .onFailure { onFailure(it) }
-                .onSuccess { data = MainData(environmentalData = it.data) }
+                .onSuccess { data = data.copy(isLoading = false, environmentalData = it.data) }
         }
     }
 
     internal fun clearEnvironmentalData() {
-        data = MainData()
+        data = data.copy(environmentalData = null)
     }
 
-    private fun sendAirCond(command: AirCondCommand) {
+    internal fun upTemperature() {
+        saveTemperature(data.temperature + 0.5f)
+    }
+
+    internal fun downTemperature() {
+        saveTemperature(data.temperature - 0.5f)
+    }
+
+    private fun saveTemperature(temperature: Float) {
+        sharedPreferences.edit(commit = true) { putFloat(PREF_KEY_TEMPERATURE, temperature) }
+        data = data.copy(temperature = temperature)
+    }
+
+    private fun sendAirCond(runMode: Int) {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
-            data = MainData(isLoading = true)
-            runCatching { apiService.airCond(command.rawValue) }
-                .onSuccess { data = MainData() }
+            data = data.copy(isLoading = true, error = null)
+            runCatching { apiService.airCond(runMode, sharedPreferences.getFloat(PREF_KEY_TEMPERATURE, 20f)) }
+                .onSuccess { data = data.copy(isLoading = false) }
                 .onFailure { onFailure(it) }
         }
     }
@@ -129,15 +151,16 @@ class MainViewModel : ViewModel() {
     private fun sendAmp(command: AmpCommand) {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
-            data = MainData(isLoading = true)
+            data = data.copy(isLoading = true, error = null)
             runCatching { apiService.amp(command.rawValue) }
-                .onSuccess { data = MainData() }
+                .onSuccess { data = data.copy(isLoading = false) }
                 .onFailure { onFailure(it) }
         }
     }
 
     data class MainData(
         val environmentalData: EnvironmentalData? = null,
+        val temperature: Float = 20f,
         val isLoading: Boolean = false,
         val error: Throwable? = null,
     )

@@ -21,7 +21,8 @@ interface APIService {
     @FormUrlEncoded
     @POST("air-cond")
     suspend fun airCond(
-        @Field("command") command: String
+        @Field("run_mode") runMode: Int,
+        @Field("temperature") temperature: Float,
     )
 
     @FormUrlEncoded
