@@ -107,11 +107,18 @@ class MainActivity : ComponentActivity() {
                             val currentDestination = navBackStackEntry?.destination
 
                             MainViewModel.Screen.values().forEach { screen ->
+                                val selected = currentDestination?.hierarchy?.any { it.route == screen.title } == true
                                 BottomNavigationItem(
                                     modifier = Modifier.background(color = MaterialTheme.colors.background),
-                                    icon = {},
-                                    label = { Text(text = screen.title) },
-                                    selected = currentDestination?.hierarchy?.any { it.route == screen.title } == true,
+                                    icon = {
+                                        when (screen) {
+                                            MainViewModel.Screen.CEILING_LIGHT -> Text(text = "\uD83D\uDCA1")
+                                            MainViewModel.Screen.AIR_COND -> Text(text = "\uD83C\uDF2C")
+                                            MainViewModel.Screen.AMP -> Text(text = "\uD83D\uDD0A")
+                                        }
+                                    },
+                                    label = { Text(text = screen.title, fontSize = if (selected) 12.sp else 10.sp) },
+                                    selected = selected,
                                     onClick = {
                                         navController.navigate(screen.title) {
                                             popUpTo(navController.graph.findStartDestination().id) {
@@ -120,6 +127,7 @@ class MainActivity : ComponentActivity() {
                                             launchSingleTop = true
                                             restoreState = true
                                         }
+                                        haptic()
                                     },
                                     selectedContentColor = MaterialTheme.colors.onBackground,
                                     unselectedContentColor = Color.Gray
@@ -300,8 +308,11 @@ class MainActivity : ComponentActivity() {
                 onDismissRequest = { viewModel.clearEnvironmentalData() },
                 confirmButton = {
                     Button(
-                        onClick = { viewModel.clearEnvironmentalData() },
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
+                        onClick = {
+                            viewModel.clearEnvironmentalData()
+                            haptic()
+                        },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = MaterialTheme.colors.onBackground),
                         elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp)
                     ) {
                         Text(text = "OK")
@@ -310,9 +321,8 @@ class MainActivity : ComponentActivity() {
                 title = {
                     Text(
                         text = "📡 環境値",
-                        fontSize = 22.sp,
-                        lineHeight = 33.sp,
-                        color = Color(0xc0ffffff),
+                        fontSize = 24.sp,
+                        color = MaterialTheme.colors.onBackground,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
@@ -326,8 +336,9 @@ class MainActivity : ComponentActivity() {
                             it.pressure,
                             it.illuminance
                         ),
+                        color = MaterialTheme.colors.onBackground,
                         fontSize = 18.sp,
-                        lineHeight = 27.sp
+                        lineHeight = 30.sp
                     )
                 },
                 backgroundColor = Colors.TEAL900
