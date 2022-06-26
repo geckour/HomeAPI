@@ -7,30 +7,18 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.facebook.stetho.okhttp3.StethoInterceptor
+import com.geckour.homeapi.PREF_KEY_TEMPERATURE
 import com.geckour.homeapi.api.APIService
 import com.geckour.homeapi.api.AmpCommand
 import com.geckour.homeapi.api.CeilingLightCommand
 import com.geckour.homeapi.api.model.EnvironmentalData
 import com.geckour.homeapi.model.RequestData
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import okhttp3.MediaType
-import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.create
 import timber.log.Timber
 
-class MainViewModel(private val sharedPreferences: SharedPreferences) : ViewModel() {
-
-    companion object {
-
-        private const val PREF_KEY_TEMPERATURE = "pref_key_temperature"
-    }
+class MainViewModel(private val sharedPreferences: SharedPreferences, private val apiService: APIService) : ViewModel() {
 
     internal var data: MainData by mutableStateOf(MainData(temperature = sharedPreferences.getFloat(PREF_KEY_TEMPERATURE, 20f)))
         private set
@@ -77,16 +65,6 @@ class MainViewModel(private val sharedPreferences: SharedPreferences) : ViewMode
         Screen.AIR_COND to airCondItems,
         Screen.AMP to ampItems,
     )
-
-    private val okHttpClient = OkHttpClient.Builder().addNetworkInterceptor(StethoInterceptor()).build()
-
-    @OptIn(ExperimentalSerializationApi::class)
-    private val apiService = Retrofit.Builder()
-        .client(okHttpClient)
-        .baseUrl("http://192.168.10.101:3000")
-        .addConverterFactory(Json.asConverterFactory(MediaType.get("application/json")))
-        .build()
-        .create<APIService>()
 
     private var pendingRequest: Job? = null
 

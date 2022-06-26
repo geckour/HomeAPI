@@ -1,11 +1,14 @@
 package com.geckour.homeapi.ui
 
+import android.Manifest
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -52,6 +55,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.geckour.homeapi.BootReceiver
 import com.geckour.homeapi.R
 import com.geckour.homeapi.model.RequestData
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -59,6 +63,11 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModel()
+
+    private val requestPermissionLauncher: ActivityResultLauncher<String> =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) sendBroadcast(BootReceiver.newIntent(this))
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +80,10 @@ class MainActivity : ComponentActivity() {
 
                 EnvironmentalDialog()
             }
+        }
+
+        if (BootReceiver.activityRecognitionPermissionApproved(this).not()) {
+            requestPermissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
         }
     }
 
