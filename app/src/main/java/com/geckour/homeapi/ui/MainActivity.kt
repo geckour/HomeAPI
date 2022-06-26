@@ -79,7 +79,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            MaterialTheme(colors = if (isSystemInDarkTheme()) DarkColors else DarkColors) {
+            MaterialTheme(colors = if (isSystemInDarkTheme()) DarkColors else LightColors) {
                 Contents()
                 Loading()
                 Error()
@@ -202,8 +202,7 @@ class MainActivity : ComponentActivity() {
                 text = "${item.emoji} ${item.name}",
                 textAlign = TextAlign.Start,
                 fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                color = Color(0xc0ffffff)
+                fontSize = 22.sp
             )
         }
     }
@@ -236,8 +235,7 @@ class MainActivity : ComponentActivity() {
                         text = item.emoji,
                         textAlign = TextAlign.Start,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 36.sp,
-                        color = Color(0xc0ffffff)
+                        fontSize = 36.sp
                     )
                     Text(
                         modifier = Modifier
@@ -247,8 +245,7 @@ class MainActivity : ComponentActivity() {
                         textAlign = TextAlign.End,
                         fontWeight = FontWeight.Bold,
                         fontSize = 10.sp,
-                        lineHeight = 12.sp,
-                        color = Color(0xc0ffffff)
+                        lineHeight = 12.sp
                     )
                 }
             }
@@ -284,7 +281,7 @@ class MainActivity : ComponentActivity() {
                     .fillMaxSize()
                     .background(color = Color(0x80000000))
             ) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF03DAC5))
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Colors.TEAL200)
             }
         }
     }
@@ -307,7 +304,7 @@ class MainActivity : ComponentActivity() {
                         colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
                         elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp)
                     ) {
-                        Text(text = "OK", color = Color(0xc0ffffff))
+                        Text(text = "OK")
                     }
                 },
                 title = {
@@ -330,11 +327,10 @@ class MainActivity : ComponentActivity() {
                             it.illuminance
                         ),
                         fontSize = 18.sp,
-                        lineHeight = 27.sp,
-                        color = Color(0xc0ffffff)
+                        lineHeight = 27.sp
                     )
                 },
-                backgroundColor = Color(0xFF1F2727)
+                backgroundColor = Colors.TEAL900
             )
         }
     }
@@ -359,8 +355,7 @@ class MainActivity : ComponentActivity() {
                 Text(
                     text = "🔽",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                    color = Color(0xc0ffffff)
+                    fontSize = 22.sp
                 )
             }
             Text(
@@ -368,8 +363,7 @@ class MainActivity : ComponentActivity() {
                 text = "$currentTemperature ℃",
                 textAlign = TextAlign.End,
                 fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                color = Color(0xc0ffffff)
+                fontSize = 22.sp
             )
             IconButton(
                 onClick = {
@@ -381,8 +375,7 @@ class MainActivity : ComponentActivity() {
                 Text(
                     text = "🔼",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
-                    color = Color(0xc0ffffff)
+                    fontSize = 22.sp
                 )
             }
         }
