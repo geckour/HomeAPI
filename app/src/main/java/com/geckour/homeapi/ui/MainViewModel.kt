@@ -146,6 +146,11 @@ class MainViewModel(private val sharedPreferences: SharedPreferences, private va
     enum class Screen(val title: String) {
         CEILING_LIGHT("天井灯"),
         AIR_COND("エアコン"),
-        AMP("アンプ"),
+        AMP("アンプ");
+
+        companion object {
+
+            fun findByTitle(title: String?): Screen? = values().find { it.title == title }
+        }
     }
 }
