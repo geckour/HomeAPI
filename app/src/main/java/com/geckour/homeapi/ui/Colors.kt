@@ -16,27 +16,27 @@ internal object Colors {
 }
 
 internal val DarkColors = darkColors(
-    primary = Colors.BLACK,
-    primaryVariant = Colors.BLACK,
+    primary = Colors.TEAL200,
+    primaryVariant = Colors.TEAL700,
     secondary = Colors.TEAL200,
     secondaryVariant = Colors.TEAL700,
     background = Colors.BLACK,
-    surface = Colors.BLACK,
-    onPrimary = Colors.WHITE,
-    onSecondary = Colors.WHITE,
+    surface = Colors.TAR_BLACK,
+    onPrimary = Colors.BLACK,
+    onSecondary = Colors.BLACK,
     onBackground = Colors.PALE_WHITE,
     onSurface = Colors.PALE_WHITE
 )
 
 internal val LightColors = lightColors(
-    primary = Colors.WHITE,
-    primaryVariant = Colors.WHITE,
+    primary = Colors.TEAL200,
+    primaryVariant = Colors.TEAL700,
     secondary = Colors.TEAL200,
     secondaryVariant = Colors.TEAL700,
     background = Colors.WHITE,
-    surface = Colors.WHITE,
-    onPrimary = Colors.BLACK,
-    onSecondary = Colors.BLACK,
+    surface = Colors.PALE_WHITE,
+    onPrimary = Colors.WHITE,
+    onSecondary = Colors.WHITE,
     onBackground = Colors.TAR_BLACK,
     onSurface = Colors.TAR_BLACK
 )

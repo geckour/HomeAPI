@@ -30,7 +30,6 @@ class SleepReceiver : BroadcastReceiver() {
     private val scope: CoroutineScope = MainScope()
     private val component: SleepReceiverComponent by lazy { SleepReceiverComponent() }
 
-    @OptIn(ExperimentalSerializationApi::class)
     override fun onReceive(context: Context, intent: Intent) {
         if (SleepClassifyEvent.hasEvents(intent)) {
             val events = SleepClassifyEvent.extractEvents(intent)
@@ -54,7 +53,7 @@ class SleepReceiver : BroadcastReceiver() {
                 val currentTemperature = component.sharedPreferences.getFloat(PREF_KEY_TEMPERATURE, 20f)
 
                 scope.launch {
-                    component.apiService.ceilingLight(CeilingLightCommand.OFF.rawValue)
+//                    component.apiService.ceilingLight(CeilingLightCommand.OFF.rawValue)
                     component.apiService.airCond(0, currentTemperature)
                 }
             } else {

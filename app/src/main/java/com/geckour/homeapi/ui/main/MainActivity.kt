@@ -1,6 +1,8 @@
-package com.geckour.homeapi.ui
+package com.geckour.homeapi.ui.main
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -64,9 +66,19 @@ import androidx.navigation.compose.rememberNavController
 import com.geckour.homeapi.BootReceiver
 import com.geckour.homeapi.R
 import com.geckour.homeapi.model.RequestData
+import com.geckour.homeapi.ui.Colors
+import com.geckour.homeapi.ui.DarkColors
+import com.geckour.homeapi.ui.LightColors
+import com.geckour.homeapi.ui.login.LoginActivity
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import retrofit2.HttpException
 
 class MainActivity : ComponentActivity() {
+
+    companion object {
+
+        fun newIntent(context: Context) = Intent(context, MainActivity::class.java)
+    }
 
     private val viewModel: MainViewModel by viewModel()
 
@@ -80,7 +92,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme(colors = if (isSystemInDarkTheme()) DarkColors else LightColors) {
-                Contents()
+                Content()
                 Loading()
                 Error()
 
@@ -94,7 +106,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun Contents() {
+    fun Content() {
         Column(verticalArrangement = Bottom, modifier = Modifier.fillMaxSize()) {
             val navController = rememberNavController()
 
@@ -287,7 +299,7 @@ class MainActivity : ComponentActivity() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(color = Color(0x80000000))
+                    .background(color = MaterialTheme.colors.surface)
             ) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Colors.TEAL200)
             }
@@ -297,6 +309,9 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun Error() {
         viewModel.data.error?.let {
+            if ((it as? HttpException)?.code() in 400..401) {
+                startActivity(LoginActivity.newIntent(this))
+            }
             Snackbar { Text(text = it.message.orEmpty()) }
         }
     }
