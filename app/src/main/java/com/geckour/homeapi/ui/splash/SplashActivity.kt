@@ -1,5 +1,6 @@
 package com.geckour.homeapi.ui.splash
 
+import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -8,6 +9,7 @@ import com.geckour.homeapi.ui.login.LoginActivity
 import com.geckour.homeapi.ui.main.MainActivity
 import org.koin.android.ext.android.get
 
+@SuppressLint("CustomSplashScreen")
 class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

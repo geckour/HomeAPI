@@ -2,6 +2,7 @@ package com.geckour.homeapi.ui.login
 
 import android.content.Context
 import android.content.Intent
+import android.net.wifi.WifiManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -10,7 +11,10 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
@@ -38,16 +42,24 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.content.getSystemService
 import com.geckour.homeapi.ui.Colors
 import com.geckour.homeapi.ui.DarkColors
 import com.geckour.homeapi.ui.LightColors
 import com.geckour.homeapi.ui.main.MainActivity
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import permissions.dispatcher.ktx.LocationPermission
+import permissions.dispatcher.ktx.PermissionsRequester
+import permissions.dispatcher.ktx.constructLocationPermissionRequest
 import retrofit2.HttpException
+import timber.log.Timber
 
 class LoginActivity : AppCompatActivity() {
 
@@ -57,6 +69,8 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private val viewModel by viewModel<LoginViewModel>()
+
+    private lateinit var obtainLocation: PermissionsRequester
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +82,14 @@ class LoginActivity : AppCompatActivity() {
                 Error()
             }
         }
+
+        obtainLocation = constructLocationPermissionRequest(
+            LocationPermission.COARSE,
+            LocationPermission.FINE,
+            onPermissionDenied = ::onLocationPermissionDenied,
+            requiresPermission = {}
+        )
+        obtainLocation.launch()
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -78,20 +100,25 @@ class LoginActivity : AppCompatActivity() {
         }
 
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxHeight(.67f)
+                .fillMaxWidth()
+                .padding(60.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             val focusManager = LocalFocusManager.current
             var username by remember { mutableStateOf("") }
             OutlinedTextField(
-                modifier = Modifier.onPreviewKeyEvent { event ->
-                    if (event.key in listOf(Key.Enter, Key.Tab)) {
-                        focusManager.moveFocus(FocusDirection.Down)
-                        return@onPreviewKeyEvent true
-                    }
-                    return@onPreviewKeyEvent false
-                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onPreviewKeyEvent { event ->
+                        if (event.key in listOf(Key.Enter, Key.Tab)) {
+                            focusManager.moveFocus(FocusDirection.Down)
+                            return@onPreviewKeyEvent true
+                        }
+                        return@onPreviewKeyEvent false
+                    },
                 value = username,
                 onValueChange = { username = it },
                 label = { Text(text = "ユーザ名") },
@@ -108,13 +135,16 @@ class LoginActivity : AppCompatActivity() {
             var password by remember { mutableStateOf("") }
             var passwordVisible by remember { mutableStateOf(false) }
             OutlinedTextField(
-                modifier = Modifier.onPreviewKeyEvent { event ->
-                    if (event.key in listOf(Key.Enter, Key.Tab)) {
-                        focusManager.moveFocus(FocusDirection.Down)
-                        return@onPreviewKeyEvent true
-                    }
-                    return@onPreviewKeyEvent false
-                },
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .fillMaxWidth()
+                    .onPreviewKeyEvent { event ->
+                        if (event.key in listOf(Key.Enter, Key.Tab)) {
+                            focusManager.moveFocus(FocusDirection.Down)
+                            return@onPreviewKeyEvent true
+                        }
+                        return@onPreviewKeyEvent false
+                    },
                 value = password,
                 onValueChange = { password = it },
                 label = { Text(text = "パスワード") },
@@ -136,8 +166,14 @@ class LoginActivity : AppCompatActivity() {
                 }
             )
 
-            Button(onClick = { viewModel.login(username, password) }, enabled = username.isNotBlank() && password.isNotBlank()) {
-                Text(text = "ログイン")
+            Button(
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .fillMaxWidth(),
+                onClick = { viewModel.login(username, password) },
+                enabled = username.isNotBlank() && password.isNotBlank()
+            ) {
+                Text(modifier = Modifier.padding(8.dp), text = "ログイン", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -159,9 +195,13 @@ class LoginActivity : AppCompatActivity() {
     fun Error() {
         viewModel.data.error?.let {
             if ((it as? HttpException)?.code() == 401) {
-                startActivity(LoginActivity.newIntent(this))
+                startActivity(newIntent(this))
             }
             Snackbar { Text(text = it.message.orEmpty()) }
         }
+    }
+
+    private fun onLocationPermissionDenied() {
+        obtainLocation.launch()
     }
 }

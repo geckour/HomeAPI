@@ -1,30 +1,31 @@
 package com.geckour.homeapi.ui.main
 
 import android.content.SharedPreferences
+import android.net.wifi.WifiManager
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.geckour.homeapi.App
 import com.geckour.homeapi.PREF_KEY_TEMPERATURE
 import com.geckour.homeapi.api.APIService
 import com.geckour.homeapi.api.AmpCommand
 import com.geckour.homeapi.api.CeilingLightCommand
 import com.geckour.homeapi.api.model.EnvironmentalData
 import com.geckour.homeapi.model.RequestData
+import com.geckour.homeapi.util.isInHome
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class MainViewModel(
-    app: App,
     private val sharedPreferences: SharedPreferences,
+    private val wifiManager: WifiManager,
     private val apiServiceForWifi: APIService,
     private val apiServiceForMobile: APIService
-) : AndroidViewModel(app) {
+) : ViewModel() {
 
     internal var data: MainData by mutableStateOf(MainData(temperature = sharedPreferences.getFloat(PREF_KEY_TEMPERATURE, 20f)))
         private set
@@ -89,7 +90,7 @@ class MainViewModel(
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
             data = data.copy(isLoading = true, error = null)
-            runCatching { (if (getApplication<App>().isWiFiConnected) apiServiceForWifi else apiServiceForMobile).ceilingLight(command.rawValue) }
+            runCatching { (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile).ceilingLight(command.rawValue) }
                 .onSuccess { data = data.copy(isLoading = false) }
                 .onFailure { onFailure(it) }
         }
@@ -99,7 +100,7 @@ class MainViewModel(
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
             data = data.copy(isLoading = true, error = null)
-            runCatching { (if (getApplication<App>().isWiFiConnected) apiServiceForWifi else apiServiceForMobile).getEnvironmentalData() }
+            runCatching { (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile).getEnvironmentalData() }
                 .onFailure { onFailure(it) }
                 .onSuccess { data = data.copy(isLoading = false, environmentalData = it.data) }
         }
@@ -127,7 +128,7 @@ class MainViewModel(
         pendingRequest = viewModelScope.launch {
             data = data.copy(isLoading = true, error = null)
             runCatching {
-                (if (getApplication<App>().isWiFiConnected) apiServiceForWifi else apiServiceForMobile).airCond(
+                (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile).airCond(
                     runMode,
                     sharedPreferences.getFloat(PREF_KEY_TEMPERATURE, 20f)
                 )
@@ -141,7 +142,7 @@ class MainViewModel(
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
             data = data.copy(isLoading = true, error = null)
-            runCatching { (if (getApplication<App>().isWiFiConnected) apiServiceForWifi else apiServiceForMobile).amp(command.rawValue) }
+            runCatching { (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile).amp(command.rawValue) }
                 .onSuccess { data = data.copy(isLoading = false) }
                 .onFailure { onFailure(it) }
         }
