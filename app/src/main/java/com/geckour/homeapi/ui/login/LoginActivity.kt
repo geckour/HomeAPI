@@ -2,7 +2,6 @@ package com.geckour.homeapi.ui.login
 
 import android.content.Context
 import android.content.Intent
-import android.net.wifi.WifiManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -49,17 +48,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.getSystemService
 import com.geckour.homeapi.ui.Colors
 import com.geckour.homeapi.ui.DarkColors
 import com.geckour.homeapi.ui.LightColors
 import com.geckour.homeapi.ui.main.MainActivity
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import permissions.dispatcher.ktx.LocationPermission
-import permissions.dispatcher.ktx.PermissionsRequester
-import permissions.dispatcher.ktx.constructLocationPermissionRequest
 import retrofit2.HttpException
-import timber.log.Timber
 
 class LoginActivity : AppCompatActivity() {
 
@@ -69,8 +63,6 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private val viewModel by viewModel<LoginViewModel>()
-
-    private lateinit var obtainLocation: PermissionsRequester
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,14 +74,6 @@ class LoginActivity : AppCompatActivity() {
                 Error()
             }
         }
-
-        obtainLocation = constructLocationPermissionRequest(
-            LocationPermission.COARSE,
-            LocationPermission.FINE,
-            onPermissionDenied = ::onLocationPermissionDenied,
-            requiresPermission = {}
-        )
-        obtainLocation.launch()
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
@@ -199,9 +183,5 @@ class LoginActivity : AppCompatActivity() {
             }
             Snackbar { Text(text = it.message.orEmpty()) }
         }
-    }
-
-    private fun onLocationPermissionDenied() {
-        obtainLocation.launch()
     }
 }
