@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">HomeAPI</string>
 
-    <string name="request_environmental">👀 環境値を見る</string>
-    <string name="request_environmental_log">📈 グラフを表示する</string>
+    <string name="request_environmental">📡 環境値</string>
+    <string name="request_environmental_log">📈 グラフ</string>
 </resources>

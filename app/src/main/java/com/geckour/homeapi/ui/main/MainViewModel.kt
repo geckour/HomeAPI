@@ -113,12 +113,16 @@ class MainViewModel(
             data = data.copy(isLoading = true, error = null)
             runCatching { (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile).getEnvironmentalLog(id, end, start) }
                 .onFailure { onFailure(it) }
-                .onSuccess { data = data.copy(isLoading = false, environmentalLog = it.data) }
+                .onSuccess { data = data.copy(isLoading = false, environmentalLogData = it.data) }
         }
     }
 
     internal fun clearEnvironmentalData() {
         data = data.copy(environmentalData = null)
+    }
+
+    internal fun clearEnvironmentalLogData() {
+        data = data.copy(environmentalLogData = null)
     }
 
     internal fun upTemperature() {
@@ -161,7 +165,7 @@ class MainViewModel(
 
     data class MainData(
         val environmentalData: EnvironmentalData? = null,
-        val environmentalLog: List<EnvironmentalLog>? = null,
+        val environmentalLogData: List<EnvironmentalLog>? = null,
         val temperature: Float = 20f,
         val isLoading: Boolean = false,
         val error: Throwable? = null,

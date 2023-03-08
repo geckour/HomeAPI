@@ -25,6 +25,8 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.create
+import java.text.SimpleDateFormat
+import java.util.*
 
 private const val AUTH_SERVICE_WIFI = "auth_service_wifi"
 private const val AUTH_SERVICE_MOBILE = "auth_service_mobile"
@@ -41,6 +43,10 @@ val viewModelModule = module {
     }
 
     single { PreferenceManager.getDefaultSharedPreferences(androidContext()) }
+
+    single {
+        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.JAPAN)
+    }
 
     single {
         OkHttpClient.Builder()
