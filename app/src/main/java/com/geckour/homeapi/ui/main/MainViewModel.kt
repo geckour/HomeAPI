@@ -13,6 +13,7 @@ import com.geckour.homeapi.api.APIService
 import com.geckour.homeapi.api.AmpCommand
 import com.geckour.homeapi.api.CeilingLightCommand
 import com.geckour.homeapi.api.model.EnvironmentalData
+import com.geckour.homeapi.api.model.EnvironmentalLog
 import com.geckour.homeapi.model.RequestData
 import com.geckour.homeapi.util.isInHome
 import kotlinx.coroutines.CancellationException
@@ -106,6 +107,16 @@ class MainViewModel(
         }
     }
 
+    internal fun requestEnvironmentalLog(id: String, end: Long = System.currentTimeMillis() / 1000, start: Long = end - 86400) {
+        cancelPendingRequest()
+        pendingRequest = viewModelScope.launch {
+            data = data.copy(isLoading = true, error = null)
+            runCatching { (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile).getEnvironmentalLog(id, end, start) }
+                .onFailure { onFailure(it) }
+                .onSuccess { data = data.copy(isLoading = false, environmentalLog = it.data) }
+        }
+    }
+
     internal fun clearEnvironmentalData() {
         data = data.copy(environmentalData = null)
     }
@@ -150,6 +161,7 @@ class MainViewModel(
 
     data class MainData(
         val environmentalData: EnvironmentalData? = null,
+        val environmentalLog: List<EnvironmentalLog>? = null,
         val temperature: Float = 20f,
         val isLoading: Boolean = false,
         val error: Throwable? = null,

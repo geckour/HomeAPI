@@ -2,10 +2,12 @@ package com.geckour.homeapi.api
 
 import com.geckour.homeapi.api.model.Data
 import com.geckour.homeapi.api.model.EnvironmentalData
+import com.geckour.homeapi.api.model.EnvironmentalLog
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface APIService {
 
@@ -17,6 +19,13 @@ interface APIService {
 
     @GET("environmental")
     suspend fun getEnvironmentalData(): Data<EnvironmentalData>
+
+    @GET("environmental/log")
+    suspend fun getEnvironmentalLog(
+        @Query("id") id: String,
+        @Query("end") end: Long,
+        @Query("start") start: Long,
+    ): Data<List<EnvironmentalLog>>
 
     @FormUrlEncoded
     @POST("air-cond")

@@ -61,6 +61,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.geckour.homeapi.R
+import com.geckour.homeapi.api.model.EnvironmentalLog
 import com.geckour.homeapi.model.RequestData
 import com.geckour.homeapi.ui.Colors
 import com.geckour.homeapi.ui.DarkColors
@@ -100,7 +101,7 @@ class MainActivity : AppCompatActivity() {
             Scaffold(
                 bottomBar = {
                     Column {
-                        Environmental()
+                        EnvironmentalLog()
                         BottomNavigation {
                             val navBackStackEntry by navController.currentBackStackEntryAsState()
                             val currentDestination = navBackStackEntry?.destination
@@ -276,6 +277,27 @@ class MainActivity : AppCompatActivity() {
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
             ) {
                 Text(text = getString(R.string.request_environmental), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
+        }
+    }
+
+    @Composable
+    fun EnvironmentalLog() {
+        Box(
+            modifier = Modifier
+                .padding(vertical = 20.dp)
+                .fillMaxWidth()
+        ) {
+            Button(
+                onClick = {
+                    viewModel.requestEnvironmentalLog(id = "D8:BF:C0:D0:09:07")
+                    haptic()
+                },
+                colors = ButtonDefaults.buttonColors(backgroundColor = Colors.TEAL700),
+                modifier = Modifier.align(Alignment.Center),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
+            ) {
+                Text(text = getString(R.string.request_environmental_log), fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
     }
