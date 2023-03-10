@@ -437,8 +437,8 @@ class MainActivity : AppCompatActivity() {
                             val minTemperature = floor(environmentalLog.minBy { it.temperature }.temperature / 10) * 10
                             val maxHumidity = ceil(environmentalLog.maxBy { it.humidity }.humidity / 10) * 10
                             val minHumidity = floor(environmentalLog.minBy { it.humidity }.humidity / 10) * 10
-                            val maxPressure = ceil(environmentalLog.maxBy { it.pressure }.pressure / 100) * 100
-                            val minPressure = floor(environmentalLog.minBy { it.pressure }.pressure / 100) * 100
+                            val maxPressure = ceil(environmentalLog.maxBy { it.pressure }.pressure / 10) * 10
+                            val minPressure = floor(environmentalLog.minBy { it.pressure }.pressure / 10) * 10
                             Column(modifier = Modifier.fillMaxHeight()) {
                                 Text(text = "${maxTemperature.toInt()} ℃", color = Color.Yellow, fontSize = 10.sp)
                                 Spacer(
