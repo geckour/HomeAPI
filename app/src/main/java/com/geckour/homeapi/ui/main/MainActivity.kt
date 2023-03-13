@@ -494,10 +494,19 @@ class MainActivity : AppCompatActivity() {
 
                         var selectedLog by remember { mutableStateOf<EnvironmentalLog?>(null) }
 
-                        Card(modifier = Modifier
-                            .padding(bottom = 4.dp)
-                            .alpha(if (selectedLog == null) 0f else 1f)) {
+                        Card(
+                            modifier = Modifier
+                                .padding(bottom = 4.dp)
+                                .alpha(if (selectedLog == null) 0f else 1f)
+                        ) {
                             Column(modifier = Modifier.padding(4.dp)) {
+                                val dateString = selectedLog?.date?.let { get<SimpleDateFormat>().format(it) }.orEmpty()
+                                Text(
+                                    text = dateString,
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
                                 Text(text = "${selectedLog?.temperature} ℃", fontSize = 10.sp, color = Color.Yellow)
                                 Text(text = "${selectedLog?.humidity} %", fontSize = 10.sp, color = Color.Cyan)
                                 Text(text = "${selectedLog?.pressure} hPa", fontSize = 10.sp, color = Color.Green)
