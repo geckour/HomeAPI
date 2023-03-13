@@ -9,7 +9,7 @@ import retrofit2.http.POST
 
 interface AuthService {
 
-    @POST("/oauth/token")
+    @POST("/0/oauth/token")
     @Headers("Authorization: Basic aG9tZUFQSUNsaWVudDpoTEJjblJpc2hPQm5pSFZ5N09UVHpiV1NxMkpKV2g=")
     @FormUrlEncoded
     suspend fun getAccessToken(
@@ -18,7 +18,7 @@ interface AuthService {
         @Field("password") password: String
     ): OAuthToken
 
-    @POST("/oauth/token")
+    @POST("/0/oauth/token")
     @Headers("Authorization: Basic aG9tZUFQSUNsaWVudDpoTEJjblJpc2hPQm5pSFZ5N09UVHpiV1NxMkpKV2g=")
     @FormUrlEncoded
     fun refreshAccessToken(

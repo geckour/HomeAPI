@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.view.MotionEvent
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Canvas
@@ -45,6 +46,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Snackbar
 import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,6 +54,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -60,8 +63,10 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -112,12 +117,54 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun Content() {
         Column(verticalArrangement = Bottom, modifier = Modifier.fillMaxSize()) {
             val navController = rememberNavController()
 
             Scaffold(
+                topBar = {
+                    TopAppBar(contentPadding = PaddingValues(horizontal = 16.dp)) {
+                        Text(
+                            text = stringResource(id = R.string.app_name),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .pointerInteropFilter { event ->
+                                    return@pointerInteropFilter when (event.action) {
+                                        MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                                            viewModel.sendSignal(true)
+                                            true
+                                        }
+                                        MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL -> {
+                                            viewModel.sendSignal(false)
+                                            true
+                                        }
+                                        else -> false
+                                    }
+                                },
+                            fontWeight = FontWeight.Bold
+                        )
+                        Button(
+                            modifier = Modifier.padding(end = 8.dp),
+                            onClick = { viewModel.setRoom(MainViewModel.Room.LIVING) },
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = if (viewModel.data.room == MainViewModel.Room.LIVING) Colors.TEAL700 else Colors.TEAL900
+                            )
+                        ) {
+                            Text(text = "居室")
+                        }
+                        Button(
+                            onClick = { viewModel.setRoom(MainViewModel.Room.KITCHEN) },
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = if (viewModel.data.room == MainViewModel.Room.KITCHEN) Colors.TEAL700 else Colors.TEAL900
+                            )
+                        ) {
+                            Text(text = "台所")
+                        }
+                    }
+                },
                 bottomBar = {
                     Column {
                         Row(
@@ -335,7 +382,15 @@ class MainActivity : AppCompatActivity() {
             if ((it as? HttpException)?.code() in 400..401) {
                 startActivity(LoginActivity.newIntent(this))
             }
-            Snackbar { Text(text = it.message.orEmpty()) }
+            Snackbar(
+                action = {
+                    Button(onClick = { viewModel.clearError() }) {
+                        Text(text = "OK", fontWeight = FontWeight.Bold)
+                    }
+                }
+            ) {
+                Text(text = it.message.orEmpty())
+            }
         }
     }
 
@@ -570,7 +625,9 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                         Row(
-                            modifier = Modifier.padding(top = 12.dp).fillMaxWidth(),
+                            modifier = Modifier
+                                .padding(top = 12.dp)
+                                .fillMaxWidth(),
                             horizontalArrangement = Center
                         ) {
                             Column(modifier = Modifier.padding(end = 4.dp)) {

@@ -7,36 +7,50 @@ import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface APIService {
 
     @FormUrlEncoded
-    @POST("light/ceiling")
+    @POST("{roomId}/light/ceiling")
     suspend fun ceilingLight(
+        @Path("roomId") roomId: String,
         @Field("command") command: String
     )
 
-    @GET("environmental")
-    suspend fun getEnvironmentalData(): Data<EnvironmentalData>
+    @FormUrlEncoded
+    @POST("{roomId}/light/signal")
+    suspend fun signalLight(
+        @Path("roomId") roomId: String,
+        @Field("command") command: Int
+    )
 
-    @GET("environmental/log")
+    @GET("{roomId}/environmental")
+    suspend fun getEnvironmentalData(
+        @Path("roomId") roomId: String
+    ): Data<EnvironmentalData>
+
+    @GET("{roomId}/environmental/log")
     suspend fun getEnvironmentalLog(
+        @Path("roomId") roomId: String,
         @Query("id") id: String,
         @Query("end") end: Long,
         @Query("start") start: Long,
     ): Data<List<EnvironmentalLog>>
 
     @FormUrlEncoded
-    @POST("air-cond")
+    @POST("{roomId}/air-cond")
     suspend fun airCond(
+        @Path("roomId") roomId: String,
         @Field("run_mode") runMode: Int,
         @Field("temperature") temperature: Float,
     )
 
     @FormUrlEncoded
-    @POST("amp")
+    @POST("{roomId}/amp")
     suspend fun amp(
+        @Path("roomId") roomId: String,
         @Field("command") command: String
     )
 }
