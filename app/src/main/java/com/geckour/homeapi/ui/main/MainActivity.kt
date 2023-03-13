@@ -39,6 +39,7 @@ import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.IconButton
@@ -56,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -80,6 +82,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.geckour.homeapi.R
+import com.geckour.homeapi.api.model.EnvironmentalLog
 import com.geckour.homeapi.model.RequestData
 import com.geckour.homeapi.ui.Colors
 import com.geckour.homeapi.ui.DarkColors
@@ -90,6 +93,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import retrofit2.HttpException
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -439,6 +443,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun EnvironmentalLogDialog() {
         viewModel.data.environmentalLogData?.let { environmentalLog ->
@@ -481,13 +486,25 @@ class MainActivity : AppCompatActivity() {
                         }
 
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         val start = environmentalLog.firstOrNull()?.date ?: return@AlertDialog
                         val end = environmentalLog.lastOrNull()?.date ?: return@AlertDialog
-                        Row(modifier = Modifier.weight(1f)) {
+
+                        var selectedLog by remember { mutableStateOf<EnvironmentalLog?>(null) }
+
+                        Card(modifier = Modifier
+                            .padding(bottom = 4.dp)
+                            .alpha(if (selectedLog == null) 0f else 1f)) {
+                            Column(modifier = Modifier.padding(4.dp)) {
+                                Text(text = "${selectedLog?.temperature} ℃", fontSize = 10.sp, color = Color.Yellow)
+                                Text(text = "${selectedLog?.humidity} %", fontSize = 10.sp, color = Color.Cyan)
+                                Text(text = "${selectedLog?.pressure} hPa", fontSize = 10.sp, color = Color.Green)
+                            }
+                        }
+
+                        Row(modifier = Modifier.height(160.dp)) {
                             val maxTemperature = ceil(environmentalLog.maxBy { it.temperature }.temperature / 10) * 10
                             val minTemperature = floor(environmentalLog.minBy { it.temperature }.temperature / 10) * 10
                             val maxHumidity = ceil(environmentalLog.maxBy { it.humidity }.humidity / 10) * 10
@@ -505,12 +522,40 @@ class MainActivity : AppCompatActivity() {
                             }
                             Box(modifier = Modifier.weight(1f)) {
                                 val density = LocalDensity.current
+                                var width by remember { mutableStateOf(0f) }
                                 Canvas(
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .pointerInteropFilter { event ->
+                                            return@pointerInteropFilter when (event.action) {
+                                                MotionEvent.ACTION_DOWN,
+                                                MotionEvent.ACTION_POINTER_DOWN,
+                                                MotionEvent.ACTION_MOVE -> {
+                                                    val pointedTime = (start.time + (end.time - start.time) * event.x / width).toLong()
+                                                    selectedLog = environmentalLog.minBy { abs(it.date.time - pointedTime) }
+                                                    true
+                                                }
+                                                MotionEvent.ACTION_UP,
+                                                MotionEvent.ACTION_POINTER_UP -> {
+                                                    selectedLog = null
+                                                    true
+                                                }
+                                                else -> false
+                                            }
+                                        },
                                     onDraw = {
+                                        width = size.width
+
                                         val graphPadding = with(density) {
                                             RectF(8.dp.toPx(), 8.sp.toPx(), 8.dp.toPx(), 8.sp.toPx())
                                         }
+
+                                        repeat(3) {
+                                            val plotS = getPlot(size, graphPadding, it.toFloat(), 3f, -1f, Date(0), Date(0), Date(1))
+                                            val plotE = getPlot(size, graphPadding, it.toFloat(), 3f, -1f, Date(1), Date(0), Date(1))
+                                            drawLine(Colors.PALE_WHITE.copy(alpha = 0.5f), Offset(plotS.x, plotS.y), Offset(plotE.x, plotE.y))
+                                        }
+
                                         val temperaturePath = Path()
                                         environmentalLog.forEachIndexed { index, log ->
                                             val plot =
@@ -557,6 +602,12 @@ class MainActivity : AppCompatActivity() {
                                             color = Color.Green,
                                             style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
                                         )
+
+                                        selectedLog?.let { target ->
+                                            val top = getPlot(size, graphPadding, 1f, 0f, 1f, target.date, start, end)
+                                            val bottom = getPlot(size, graphPadding, 0f, 0f, 1f, target.date, start, end)
+                                            drawLine(Color.White, Offset(top.x, top.y), Offset(bottom.x, bottom.y))
+                                        }
                                         drawLine(
                                             color = Color.White,
                                             start = Offset(graphPadding.left, graphPadding.top),
@@ -634,11 +685,11 @@ class MainActivity : AppCompatActivity() {
                                 Text(text = "🔼", fontSize = 10.sp)
                                 Text(text = "🔽", fontSize = 10.sp)
                             }
-                            Column(modifier = Modifier.padding(end = 4.dp)) {
+                            Column(modifier = Modifier.padding(end = 8.dp)) {
                                 Text(text = "${environmentalLog.maxBy { it.temperature }.temperature} ℃", fontSize = 10.sp, color = Color.Yellow)
                                 Text(text = "${environmentalLog.minBy { it.temperature }.temperature} ℃", fontSize = 10.sp, color = Color.Yellow)
                             }
-                            Column(modifier = Modifier.padding(end = 4.dp)) {
+                            Column(modifier = Modifier.padding(end = 8.dp)) {
                                 Text(text = "${environmentalLog.maxBy { it.humidity }.humidity} %", fontSize = 10.sp, color = Color.Cyan)
                                 Text(text = "${environmentalLog.minBy { it.humidity }.humidity} %", fontSize = 10.sp, color = Color.Cyan)
                             }
