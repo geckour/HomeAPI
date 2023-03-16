@@ -20,37 +20,31 @@ interface APIService {
     )
 
     @FormUrlEncoded
-    @POST("{roomId}/light/signal")
+    @POST("0/light/signal")
     suspend fun signalLight(
-        @Path("roomId") roomId: String,
         @Field("command") command: Int
     )
 
-    @GET("{roomId}/environmental")
-    suspend fun getEnvironmentalData(
-        @Path("roomId") roomId: String
-    ): Data<EnvironmentalData>
+    @GET("0/environmental")
+    suspend fun getEnvironmentalData(): Data<EnvironmentalData>
 
-    @GET("{roomId}/environmental/log")
+    @GET("0/environmental/log")
     suspend fun getEnvironmentalLog(
-        @Path("roomId") roomId: String,
         @Query("id") id: String,
         @Query("end") end: Long,
         @Query("start") start: Long,
     ): Data<List<EnvironmentalLog>>
 
     @FormUrlEncoded
-    @POST("{roomId}/air-cond")
+    @POST("0/air-cond")
     suspend fun airCond(
-        @Path("roomId") roomId: String,
         @Field("run_mode") runMode: Int,
         @Field("temperature") temperature: Float,
     )
 
     @FormUrlEncoded
-    @POST("{roomId}/amp")
+    @POST("0/amp")
     suspend fun amp(
-        @Path("roomId") roomId: String,
         @Field("command") command: String
     )
 }

@@ -45,14 +45,16 @@ import androidx.compose.material.Divider
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Snackbar
+import androidx.compose.material.ScaffoldState
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -88,6 +90,7 @@ import com.geckour.homeapi.ui.Colors
 import com.geckour.homeapi.ui.DarkColors
 import com.geckour.homeapi.ui.LightColors
 import com.geckour.homeapi.ui.login.LoginActivity
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import retrofit2.HttpException
@@ -111,9 +114,11 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             MaterialTheme(colors = if (isSystemInDarkTheme()) DarkColors else LightColors) {
-                Content()
+                val scaffoldState = rememberScaffoldState()
+
+                Content(scaffoldState)
                 Loading()
-                Error()
+                Error(scaffoldState = scaffoldState)
 
                 EnvironmentalDialog()
                 EnvironmentalLogDialog()
@@ -123,11 +128,12 @@ class MainActivity : AppCompatActivity() {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Content() {
+    fun Content(scaffoldState: ScaffoldState) {
         Column(verticalArrangement = Bottom, modifier = Modifier.fillMaxSize()) {
             val navController = rememberNavController()
 
             Scaffold(
+                scaffoldState = scaffoldState,
                 topBar = {
                     TopAppBar(contentPadding = PaddingValues(horizontal = 16.dp)) {
                         Text(
@@ -175,7 +181,7 @@ class MainActivity : AppCompatActivity() {
                             modifier = Modifier
                                 .padding(vertical = 20.dp)
                                 .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
+                            horizontalArrangement = Center
                         ) {
                             Environmental()
                             Spacer(modifier = Modifier.width(8.dp))
@@ -381,19 +387,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    fun Error() {
+    fun Error(scaffoldState: ScaffoldState) {
         viewModel.data.error?.let {
             if ((it as? HttpException)?.code() in 400..401) {
                 startActivity(LoginActivity.newIntent(this))
             }
-            Snackbar(
-                action = {
-                    Button(onClick = { viewModel.clearError() }) {
-                        Text(text = "OK", fontWeight = FontWeight.Bold)
-                    }
-                }
-            ) {
-                Text(text = it.message.orEmpty())
+            rememberCoroutineScope().launch {
+                scaffoldState.snackbarHostState.showSnackbar(it.message.orEmpty(), actionLabel = "OK")
             }
         }
     }
@@ -722,7 +722,7 @@ class MainActivity : AppCompatActivity() {
                 .padding(16.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Center
         ) {
             IconButton(
                 onClick = {

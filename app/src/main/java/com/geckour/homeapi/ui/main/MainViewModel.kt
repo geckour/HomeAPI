@@ -109,7 +109,7 @@ class MainViewModel(
             data = data.copy(isLoading = true, error = null)
             runCatching {
                 (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-                    .getEnvironmentalData(roomId = data.room.id)
+                    .getEnvironmentalData()
             }
                 .onFailure { onFailure(it) }
                 .onSuccess { data = data.copy(isLoading = false, environmentalData = it.data) }
@@ -123,7 +123,6 @@ class MainViewModel(
             runCatching {
                 (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
                     .getEnvironmentalLog(
-                        roomId = data.room.id,
                         id = id,
                         end = end,
                         start = start
@@ -139,7 +138,7 @@ class MainViewModel(
         pendingRequest = viewModelScope.launch {
             runCatching {
                 (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-                    .signalLight(roomId = data.room.id, command = if (signal) 1 else 0)
+                    .signalLight(command = if (signal) 1 else 0)
             }.onFailure { onFailure(it) }
         }
     }
@@ -169,10 +168,6 @@ class MainViewModel(
         data = data.copy(room = room)
     }
 
-    internal fun clearError() {
-        data = data.copy(error = null)
-    }
-
     private fun sendAirCond(runMode: Int) {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
@@ -180,7 +175,6 @@ class MainViewModel(
             runCatching {
                 (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
                     .airCond(
-                        roomId = data.room.id,
                         runMode = runMode,
                         temperature = sharedPreferences.getFloat(
                             PREF_KEY_TEMPERATURE, 20f
@@ -198,10 +192,7 @@ class MainViewModel(
             data = data.copy(isLoading = true, error = null)
             runCatching {
                 (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-                    .amp(
-                        roomId = data.room.id,
-                        command = command.rawValue
-                    )
+                    .amp(command = command.rawValue)
             }
                 .onSuccess { data = data.copy(isLoading = false) }
                 .onFailure { onFailure(it) }
@@ -220,12 +211,7 @@ class MainViewModel(
     enum class Screen(val title: String) {
         CEILING_LIGHT("天井灯"),
         AIR_COND("エアコン"),
-        AMP("アンプ");
-
-        companion object {
-
-            fun findByTitle(title: String?): Screen? = values().find { it.title == title }
-        }
+        AMP("アンプ")
     }
 
     enum class Room(val id: String) {

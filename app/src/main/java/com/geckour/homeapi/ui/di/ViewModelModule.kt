@@ -94,7 +94,7 @@ val viewModelModule = module {
     single(named(API_SERVICE_WIFI)) {
         Retrofit.Builder()
             .client(get())
-            .baseUrl("http://192.168.10.101:3000")
+            .baseUrl("https://192.168.10.101:3000")
             .addConverterFactory(Json.asConverterFactory(MediaType.get("application/json")))
             .build()
             .create<APIService>()
@@ -103,7 +103,7 @@ val viewModelModule = module {
     single(named(AUTH_SERVICE_WIFI)) {
         Retrofit.Builder()
             .client(OkHttpClient.Builder().build())
-            .baseUrl("http://192.168.10.101:3000")
+            .baseUrl("https://192.168.10.101:3000")
             .addConverterFactory(Json.asConverterFactory(MediaType.get("application/json")))
             .build()
             .create<AuthService>()
@@ -113,7 +113,7 @@ val viewModelModule = module {
     single(named(API_SERVICE_MOBILE)) {
         Retrofit.Builder()
             .client(get())
-            .baseUrl("http://api.geckour.com:5775")
+            .baseUrl("https://api.geckour.com:5775")
             .addConverterFactory(Json.asConverterFactory(MediaType.get("application/json")))
             .build()
             .create<APIService>()
@@ -122,7 +122,7 @@ val viewModelModule = module {
     single(named(AUTH_SERVICE_MOBILE)) {
         Retrofit.Builder()
             .client(OkHttpClient.Builder().build())
-            .baseUrl("http://api.geckour.com:5775")
+            .baseUrl("https://api.geckour.com:5775")
             .addConverterFactory(Json.asConverterFactory(MediaType.get("application/json")))
             .build()
             .create<AuthService>()
