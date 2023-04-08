@@ -6,12 +6,14 @@ import android.graphics.PointF
 import android.graphics.RectF
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.MotionEvent
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -34,6 +36,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
@@ -77,12 +81,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import com.geckour.homeapi.R
 import com.geckour.homeapi.api.model.EnvironmentalLog
 import com.geckour.homeapi.model.RequestData
@@ -126,11 +124,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
+    @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
     fun Content(scaffoldState: ScaffoldState) {
         Column(verticalArrangement = Bottom, modifier = Modifier.fillMaxSize()) {
-            val navController = rememberNavController()
+            val pagerState = rememberPagerState()
 
             Scaffold(
                 scaffoldState = scaffoldState,
@@ -176,6 +174,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 },
                 bottomBar = {
+                    val coroutineScope = rememberCoroutineScope()
                     Column {
                         Row(
                             modifier = Modifier
@@ -188,11 +187,8 @@ class MainActivity : AppCompatActivity() {
                             EnvironmentalLog()
                         }
                         BottomNavigation {
-                            val navBackStackEntry by navController.currentBackStackEntryAsState()
-                            val currentDestination = navBackStackEntry?.destination
-
-                            MainViewModel.Screen.values().forEach { screen ->
-                                val selected = currentDestination?.hierarchy?.any { it.route == screen.title } == true
+                            MainViewModel.Screen.values().forEachIndexed { index, screen ->
+                                val selected = index == pagerState.currentPage
                                 BottomNavigationItem(
                                     modifier = Modifier.background(color = MaterialTheme.colors.background),
                                     icon = {
@@ -205,12 +201,8 @@ class MainActivity : AppCompatActivity() {
                                     label = { Text(text = screen.title, fontSize = if (selected) 12.sp else 10.sp) },
                                     selected = selected,
                                     onClick = {
-                                        navController.navigate(screen.title) {
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = true
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = true
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(index)
                                         }
                                         haptic()
                                     },
@@ -222,46 +214,48 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             ) { innerPadding ->
-                NavHost(navController = navController, startDestination = MainViewModel.Screen.CEILING_LIGHT.title, Modifier.padding(innerPadding)) {
-                    composable(MainViewModel.Screen.CEILING_LIGHT.title) {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(color = MaterialTheme.colors.background), reverseLayout = true
-                        ) {
-                            viewModel.items[MainViewModel.Screen.CEILING_LIGHT]?.let {
-                                itemsIndexed(it) { i, item -> ListItem(item = item, i == 0) }
+                HorizontalPager(pageCount = 3, state = pagerState, contentPadding = innerPadding) { page ->
+                    when (page) {
+                        0 -> {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(color = MaterialTheme.colors.background), reverseLayout = true
+                            ) {
+                                viewModel.items[MainViewModel.Screen.CEILING_LIGHT]?.let {
+                                    itemsIndexed(it) { i, item -> ListItem(item = item, i == 0) }
+                                }
                             }
                         }
-                    }
-                    composable(MainViewModel.Screen.AIR_COND.title) {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(color = MaterialTheme.colors.background), reverseLayout = true
-                        ) {
-                            viewModel.items[MainViewModel.Screen.AIR_COND]?.let {
-                                itemsIndexed(it) { i, item -> ListItem(item = item, i == 0) }
+                        1 -> {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(color = MaterialTheme.colors.background), reverseLayout = true
+                            ) {
+                                viewModel.items[MainViewModel.Screen.AIR_COND]?.let {
+                                    itemsIndexed(it) { i, item -> ListItem(item = item, i == 0) }
+                                }
+                                item { ModifyTemperature(viewModel.data.temperature) }
                             }
-                            item { ModifyTemperature(viewModel.data.temperature) }
                         }
-                    }
-                    composable(MainViewModel.Screen.AMP.title) {
-                        val spanCount = 4
-                        var size by remember { mutableStateOf(IntSize.Zero) }
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(color = MaterialTheme.colors.background)
-                                .onGloballyPositioned { layoutCoordinates -> size = layoutCoordinates.size },
-                            reverseLayout = true
-                        ) {
-                            viewModel.items[MainViewModel.Screen.AMP]?.chunked(spanCount)?.let {
-                                items(it) { item ->
-                                    GridItem(
-                                        items = item.reversed(),
-                                        sideLength = with(LocalDensity.current) { (size.width / spanCount).toDp() }
-                                    )
+                        2 -> {
+                            val spanCount = 4
+                            var size by remember { mutableStateOf(IntSize.Zero) }
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(color = MaterialTheme.colors.background)
+                                    .onGloballyPositioned { layoutCoordinates -> size = layoutCoordinates.size },
+                                reverseLayout = true
+                            ) {
+                                viewModel.items[MainViewModel.Screen.AMP]?.chunked(spanCount)?.let {
+                                    items(it) { item ->
+                                        GridItem(
+                                            items = item.reversed(),
+                                            sideLength = with(LocalDensity.current) { (size.width / spanCount).toDp() }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -761,12 +755,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun haptic() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (Build.VERSION.SDK_INT > 32) {
             getSystemService(Vibrator::class.java)?.vibrate(
                 VibrationEffect
                     .startComposition()
                     .addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK)
-                    .compose()
+                    .compose(),
+                VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM)
             )
         }
     }
