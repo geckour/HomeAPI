@@ -585,6 +585,7 @@ class MainActivity : AppCompatActivity() {
                                             MotionEvent.ACTION_POINTER_UP -> {
                                                 selectedEnvironmentalLog = null
                                                 selectedSoilHumidityLog = null
+                                                targetDate = null
                                                 true
                                             }
                                             else -> false
@@ -787,9 +788,13 @@ class MainActivity : AppCompatActivity() {
                             Text(text = "${environmentalLog.maxBy { it.humidity }.humidity} %", fontSize = 10.sp, color = Color.Cyan)
                             Text(text = "${environmentalLog.minBy { it.humidity }.humidity} %", fontSize = 10.sp, color = Color.Cyan)
                         }
-                        Column {
+                        Column(modifier = Modifier.padding(end = 8.dp)) {
                             Text(text = "${environmentalLog.maxBy { it.pressure }.pressure} hPa", fontSize = 10.sp, color = Color.Green)
                             Text(text = "${environmentalLog.minBy { it.pressure }.pressure} hPa", fontSize = 10.sp, color = Color.Green)
+                        }
+                        Column {
+                            Text(text = "${soilHumidityLog.maxBy { it.value }.value} %", fontSize = 10.sp, color = Color(0xffff8000))
+                            Text(text = "${soilHumidityLog.minBy { it.value }.value} %", fontSize = 10.sp, color = Color(0xffff8000))
                         }
                     }
                 }
