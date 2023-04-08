@@ -3,6 +3,7 @@ package com.geckour.homeapi.api
 import com.geckour.homeapi.api.model.Data
 import com.geckour.homeapi.api.model.EnvironmentalData
 import com.geckour.homeapi.api.model.EnvironmentalLog
+import com.geckour.homeapi.api.model.SoilHumidityLog
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
@@ -34,6 +35,13 @@ interface APIService {
         @Query("end") end: Long,
         @Query("start") start: Long,
     ): Data<List<EnvironmentalLog>>
+
+    @GET("0/soil-humidity/log")
+    suspend fun getSoilHumidityLog(
+        @Query("id") id: String,
+        @Query("end") end: Long,
+        @Query("start") start: Long,
+    ): Data<List<SoilHumidityLog>>
 
     @FormUrlEncoded
     @POST("0/air-cond")

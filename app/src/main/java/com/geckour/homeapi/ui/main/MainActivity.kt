@@ -81,8 +81,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geckour.homeapi.R
+import com.geckour.homeapi.api.model.EnvironmentalData
 import com.geckour.homeapi.api.model.EnvironmentalLog
+import com.geckour.homeapi.api.model.SoilHumidityLog
 import com.geckour.homeapi.model.RequestData
 import com.geckour.homeapi.ui.Colors
 import com.geckour.homeapi.ui.DarkColors
@@ -112,21 +115,24 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             MaterialTheme(colors = if (isSystemInDarkTheme()) DarkColors else LightColors) {
+                val data by viewModel.data.collectAsStateWithLifecycle()
                 val scaffoldState = rememberScaffoldState()
 
-                Content(scaffoldState)
-                Loading()
-                Error(scaffoldState = scaffoldState)
+                Content(scaffoldState = scaffoldState, data = data)
+                Loading(data = data)
+                Error(data = data, scaffoldState = scaffoldState)
 
-                EnvironmentalDialog()
-                EnvironmentalLogDialog()
+                data.environmentalData?.let {
+                    EnvironmentalDialog(it)
+                }
+                EnvironmentalLogDialog(data)
             }
         }
     }
 
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
     @Composable
-    fun Content(scaffoldState: ScaffoldState) {
+    fun Content(scaffoldState: ScaffoldState, data: MainViewModel.MainData) {
         Column(verticalArrangement = Bottom, modifier = Modifier.fillMaxSize()) {
             val pagerState = rememberPagerState()
 
@@ -158,7 +164,7 @@ class MainActivity : AppCompatActivity() {
                             modifier = Modifier.padding(end = 8.dp),
                             onClick = { viewModel.setRoom(MainViewModel.Room.LIVING) },
                             colors = ButtonDefaults.buttonColors(
-                                backgroundColor = if (viewModel.data.room == MainViewModel.Room.LIVING) Colors.TEAL700 else Colors.TEAL900
+                                backgroundColor = if (data.room == MainViewModel.Room.LIVING) Colors.TEAL700 else Colors.TEAL900
                             )
                         ) {
                             Text(text = "居室")
@@ -166,7 +172,7 @@ class MainActivity : AppCompatActivity() {
                         Button(
                             onClick = { viewModel.setRoom(MainViewModel.Room.KITCHEN) },
                             colors = ButtonDefaults.buttonColors(
-                                backgroundColor = if (viewModel.data.room == MainViewModel.Room.KITCHEN) Colors.TEAL700 else Colors.TEAL900
+                                backgroundColor = if (data.room == MainViewModel.Room.KITCHEN) Colors.TEAL700 else Colors.TEAL900
                             )
                         ) {
                             Text(text = "台所")
@@ -236,7 +242,7 @@ class MainActivity : AppCompatActivity() {
                                 viewModel.items[MainViewModel.Screen.AIR_COND]?.let {
                                     itemsIndexed(it) { i, item -> ListItem(item = item, i == 0) }
                                 }
-                                item { ModifyTemperature(viewModel.data.temperature) }
+                                item { ModifyTemperature(data.temperature) }
                             }
                         }
                         2 -> {
@@ -357,7 +363,7 @@ class MainActivity : AppCompatActivity() {
     fun EnvironmentalLog() {
         Button(
             onClick = {
-                viewModel.requestEnvironmentalLog(id = "D8:BF:C0:D0:09:07")
+                viewModel.requestLogDialogData()
                 haptic()
             },
             colors = ButtonDefaults.buttonColors(backgroundColor = Colors.TEAL700),
@@ -368,8 +374,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    fun Loading() {
-        if (viewModel.data.isLoading) {
+    fun Loading(data: MainViewModel.MainData) {
+        if (data.isLoading) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -381,8 +387,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    fun Error(scaffoldState: ScaffoldState) {
-        viewModel.data.error?.let {
+    fun Error(data: MainViewModel.MainData, scaffoldState: ScaffoldState) {
+        data.error?.let {
             if ((it as? HttpException)?.code() in 400..401) {
                 startActivity(LoginActivity.newIntent(this))
             }
@@ -393,241 +399,299 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    fun EnvironmentalDialog() {
-        viewModel.data.environmentalData?.let {
-            AlertDialog(
-                onDismissRequest = { viewModel.clearEnvironmentalData() },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.clearEnvironmentalData()
-                            haptic()
-                        },
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = MaterialTheme.colors.onBackground),
-                        elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp)
-                    ) {
-                        Text(text = "OK")
-                    }
-                },
-                title = {
-                    Text(
-                        text = "📡 環境値",
-                        fontSize = 24.sp,
-                        color = MaterialTheme.colors.onBackground,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                },
-                text = {
-                    Text(
-                        text = String.format(
-                            "🌡 %.2f [℃]\n💧 %.2f [%%]\n🌪 %.2f [hPa]\n💡 %.2f [lux]",
-                            it.temperature,
-                            it.humidity,
-                            it.pressure,
-                            it.illuminance
-                        ),
-                        color = MaterialTheme.colors.onBackground,
-                        fontSize = 18.sp,
-                        lineHeight = 30.sp
-                    )
-                },
-                backgroundColor = Colors.TEAL900
-            )
-        }
+    fun EnvironmentalDialog(environmentalData: EnvironmentalData) {
+        AlertDialog(
+            onDismissRequest = { viewModel.clearEnvironmentalData() },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.clearEnvironmentalData()
+                        haptic()
+                    },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = MaterialTheme.colors.onBackground),
+                    elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp)
+                ) {
+                    Text(text = "OK")
+                }
+            },
+            title = {
+                Text(
+                    text = "📡 環境値",
+                    fontSize = 24.sp,
+                    color = MaterialTheme.colors.onBackground,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            },
+            text = {
+                Text(
+                    text = String.format(
+                        "🌡 %.2f [℃]\n💧 %.2f [%%]\n🌪 %.2f [hPa]\n💡 %.2f [lux]",
+                        environmentalData.temperature,
+                        environmentalData.humidity,
+                        environmentalData.pressure,
+                        environmentalData.illuminance
+                    ),
+                    color = MaterialTheme.colors.onBackground,
+                    fontSize = 18.sp,
+                    lineHeight = 30.sp
+                )
+            },
+            backgroundColor = Colors.TEAL900
+        )
     }
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun EnvironmentalLogDialog() {
-        viewModel.data.environmentalLogData?.let { environmentalLog ->
-            AlertDialog(
-                onDismissRequest = { viewModel.clearEnvironmentalLogData() },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.clearEnvironmentalLogData()
-                            haptic()
-                        },
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = MaterialTheme.colors.onBackground),
-                        elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp)
-                    ) {
-                        Text(text = "OK")
+    fun EnvironmentalLogDialog(data: MainViewModel.MainData) {
+        val environmentalLog = data.environmentalLogData ?: return
+        val soilHumidityLog = data.soilHumidityLogData ?: return
+        val dates = (environmentalLog.map { it.date } + soilHumidityLog.map { it.date })
+        AlertDialog(
+            onDismissRequest = { viewModel.clearEnvironmentalLogData() },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.clearEnvironmentalLogData()
+                        haptic()
+                    },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = MaterialTheme.colors.onBackground),
+                    elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp)
+                ) {
+                    Text(text = "OK")
+                }
+            },
+            title = {
+                Text(
+                    text = "📈 グラフ",
+                    fontSize = 24.sp,
+                    color = MaterialTheme.colors.onBackground,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            },
+            text = {
+                val getPlot =
+                    { canvasSize: Size, padding: RectF, value: Float, maxValue: Float, minValue: Float, time: Date, start: Date, end: Date ->
+                        val paddingLeft = padding.left
+                        val paddingBottom = padding.bottom
+                        val width = canvasSize.width - (paddingLeft + padding.right)
+                        val height = canvasSize.height - (padding.top + paddingBottom)
+                        val timeRange = end.time - start.time
+                        val timeOffset = time.time - start.time
+                        val valueRange = maxValue - minValue
+                        val valueOffset = maxValue - value
+
+                        PointF(paddingLeft + width * timeOffset / timeRange, paddingBottom + height * valueOffset / valueRange)
                     }
-                },
-                title = {
-                    Text(
-                        text = "📈 グラフ",
-                        fontSize = 24.sp,
-                        color = MaterialTheme.colors.onBackground,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                },
-                text = {
-                    val getPlot =
-                        { canvasSize: Size, padding: RectF, value: Float, maxValue: Float, minValue: Float, time: Date, start: Date, end: Date ->
-                            val paddingLeft = padding.left
-                            val paddingBottom = padding.bottom
-                            val width = canvasSize.width - (paddingLeft + padding.right)
-                            val height = canvasSize.height - (padding.top + paddingBottom)
-                            val timeRange = end.time - start.time
-                            val timeOffset = time.time - start.time
-                            val valueRange = maxValue - minValue
-                            val valueOffset = maxValue - value
 
-                            PointF(paddingLeft + width * timeOffset / timeRange, paddingBottom + height * valueOffset / valueRange)
-                        }
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    val start = dates.minOrNull() ?: return@AlertDialog
+                    val end = dates.maxOrNull() ?: return@AlertDialog
 
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        val start = environmentalLog.firstOrNull()?.date ?: return@AlertDialog
-                        val end = environmentalLog.lastOrNull()?.date ?: return@AlertDialog
+                    var selectedEnvironmentalLog by remember { mutableStateOf<EnvironmentalLog?>(null) }
+                    var selectedSoilHumidityLog by remember { mutableStateOf<SoilHumidityLog?>(null) }
+                    var targetDate by remember { mutableStateOf<Date?>(null) }
 
-                        var selectedLog by remember { mutableStateOf<EnvironmentalLog?>(null) }
-
+                    Row {
                         Card(
                             modifier = Modifier
                                 .padding(bottom = 4.dp)
-                                .alpha(if (selectedLog == null) 0f else 1f)
+                                .alpha(if (selectedEnvironmentalLog == null) 0f else 1f)
                         ) {
                             Column(modifier = Modifier.padding(4.dp)) {
-                                val dateString = selectedLog?.date?.let { get<SimpleDateFormat>().format(it) }.orEmpty()
+                                val dateString = selectedEnvironmentalLog?.date?.let { get<SimpleDateFormat>().format(it) }.orEmpty()
                                 Text(
                                     text = dateString,
                                     color = Color.White,
                                     fontSize = 10.sp,
                                     modifier = Modifier.padding(bottom = 4.dp)
                                 )
-                                Text(text = "${selectedLog?.temperature} ℃", fontSize = 10.sp, color = Color.Yellow)
-                                Text(text = "${selectedLog?.humidity} %", fontSize = 10.sp, color = Color.Cyan)
-                                Text(text = "${selectedLog?.pressure} hPa", fontSize = 10.sp, color = Color.Green)
+                                Text(text = "${selectedEnvironmentalLog?.temperature} ℃", fontSize = 10.sp, color = Color.Yellow)
+                                Text(
+                                    text = "${selectedEnvironmentalLog?.humidity} %",
+                                    fontSize = 10.sp,
+                                    color = Color.Cyan
+                                )
+                                Text(text = "${selectedEnvironmentalLog?.pressure} hPa", fontSize = 10.sp, color = Color.Green)
                             }
                         }
-
-                        Row(modifier = Modifier.height(160.dp)) {
-                            val maxTemperature = ceil(environmentalLog.maxBy { it.temperature }.temperature / 10) * 10
-                            val minTemperature = floor(environmentalLog.minBy { it.temperature }.temperature / 10) * 10
-                            val maxHumidity = ceil(environmentalLog.maxBy { it.humidity }.humidity / 10) * 10
-                            val minHumidity = floor(environmentalLog.minBy { it.humidity }.humidity / 10) * 10
-                            val maxPressure = ceil(environmentalLog.maxBy { it.pressure }.pressure / 10) * 10
-                            val minPressure = floor(environmentalLog.minBy { it.pressure }.pressure / 10) * 10
-                            Column(modifier = Modifier.fillMaxHeight()) {
-                                Text(text = "${maxTemperature.toInt()} ℃", color = Color.Yellow, fontSize = 10.sp)
-                                Spacer(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .weight(1f)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Card(
+                            modifier = Modifier
+                                .padding(bottom = 4.dp)
+                                .alpha(if (selectedSoilHumidityLog == null) 0f else 1f)
+                        ) {
+                            Column(modifier = Modifier.padding(4.dp)) {
+                                val dateString = selectedSoilHumidityLog?.date?.let { get<SimpleDateFormat>().format(it) }.orEmpty()
+                                Text(
+                                    text = dateString,
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    modifier = Modifier.padding(bottom = 4.dp)
                                 )
-                                Text(text = "${minTemperature.toInt()} ℃", color = Color.Yellow, fontSize = 10.sp)
+                                Text(
+                                    text = "${selectedSoilHumidityLog?.value} %",
+                                    fontSize = 10.sp,
+                                    color = Color(0xffff8000)
+                                )
                             }
-                            Box(modifier = Modifier.weight(1f)) {
-                                val density = LocalDensity.current
-                                var width by remember { mutableStateOf(0f) }
-                                Canvas(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .pointerInteropFilter { event ->
-                                            return@pointerInteropFilter when (event.action) {
-                                                MotionEvent.ACTION_DOWN,
-                                                MotionEvent.ACTION_POINTER_DOWN,
-                                                MotionEvent.ACTION_MOVE -> {
-                                                    val pointedTime = (start.time + (end.time - start.time) * event.x / width).toLong()
-                                                    selectedLog = environmentalLog.minBy { abs(it.date.time - pointedTime) }
-                                                    true
-                                                }
-                                                MotionEvent.ACTION_UP,
-                                                MotionEvent.ACTION_POINTER_UP -> {
-                                                    selectedLog = null
-                                                    true
-                                                }
-                                                else -> false
+                        }
+                    }
+
+                    Row(modifier = Modifier.height(160.dp)) {
+                        val maxTemperature = ceil(environmentalLog.maxBy { it.temperature }.temperature / 10) * 10
+                        val minTemperature = floor(environmentalLog.minBy { it.temperature }.temperature / 10) * 10
+                        val maxHumidity = ceil(environmentalLog.maxBy { it.humidity }.humidity / 10) * 10
+                        val minHumidity = floor(environmentalLog.minBy { it.humidity }.humidity / 10) * 10
+                        val maxPressure = ceil(environmentalLog.maxBy { it.pressure }.pressure / 10) * 10
+                        val minPressure = floor(environmentalLog.minBy { it.pressure }.pressure / 10) * 10
+                        val maxSoilHumidity = ceil(soilHumidityLog.maxBy { it.value }.value.toFloat() / 10) * 10
+                        val minSoilHumidity = floor(soilHumidityLog.minBy { it.value }.value.toFloat() / 10) * 10
+                        Column(modifier = Modifier.fillMaxHeight()) {
+                            Text(text = "${maxTemperature.toInt()} ℃", color = Color.Yellow, fontSize = 10.sp)
+                            Spacer(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .weight(1f)
+                            )
+                            Text(text = "${minTemperature.toInt()} ℃", color = Color.Yellow, fontSize = 10.sp)
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            val density = LocalDensity.current
+                            var width by remember { mutableStateOf(0f) }
+                            Canvas(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .pointerInteropFilter { event ->
+                                        return@pointerInteropFilter when (event.action) {
+                                            MotionEvent.ACTION_DOWN,
+                                            MotionEvent.ACTION_POINTER_DOWN,
+                                            MotionEvent.ACTION_MOVE -> {
+                                                val pointedTime = (start.time + (end.time - start.time) * event.x / width).toLong()
+                                                val environmental = environmentalLog.minBy { abs(it.date.time - pointedTime) }
+                                                selectedEnvironmentalLog = environmental
+                                                val environmentalDiff = abs(environmental.date.time - pointedTime)
+                                                val soilHumidity = soilHumidityLog.minBy { abs(it.date.time - pointedTime) }
+                                                selectedSoilHumidityLog = soilHumidity
+                                                val soilHumidityDiff = abs(soilHumidity.date.time - pointedTime)
+                                                targetDate = if (environmentalDiff < soilHumidityDiff) environmental.date else soilHumidity.date
+                                                true
                                             }
-                                        },
-                                    onDraw = {
-                                        width = size.width
-
-                                        val graphPadding = with(density) {
-                                            RectF(8.dp.toPx(), 8.sp.toPx(), 8.dp.toPx(), 8.sp.toPx())
-                                        }
-
-                                        repeat(3) {
-                                            val plotS = getPlot(size, graphPadding, it.toFloat(), 3f, -1f, Date(0), Date(0), Date(1))
-                                            val plotE = getPlot(size, graphPadding, it.toFloat(), 3f, -1f, Date(1), Date(0), Date(1))
-                                            drawLine(Colors.PALE_WHITE.copy(alpha = 0.5f), Offset(plotS.x, plotS.y), Offset(plotE.x, plotE.y))
-                                        }
-
-                                        val temperaturePath = Path()
-                                        environmentalLog.forEachIndexed { index, log ->
-                                            val plot =
-                                                getPlot(size, graphPadding, log.temperature, maxTemperature, minTemperature, log.date, start, end)
-                                            if (index == 0) {
-                                                temperaturePath.moveTo(plot.x, plot.y)
-                                            } else {
-                                                temperaturePath.lineTo(plot.x, plot.y)
+                                            MotionEvent.ACTION_UP,
+                                            MotionEvent.ACTION_POINTER_UP -> {
+                                                selectedEnvironmentalLog = null
+                                                selectedSoilHumidityLog = null
+                                                true
                                             }
+                                            else -> false
                                         }
-                                        drawPath(
-                                            path = temperaturePath,
-                                            color = Color.Yellow,
-                                            style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                                        )
+                                    },
+                                onDraw = {
+                                    width = size.width
 
-                                        val humidityPath = Path()
-                                        environmentalLog.forEachIndexed { index, log ->
-                                            val plot =
-                                                getPlot(size, graphPadding, log.humidity, maxHumidity, minHumidity, log.date, start, end)
-                                            if (index == 0) {
-                                                humidityPath.moveTo(plot.x, plot.y)
-                                            } else {
-                                                humidityPath.lineTo(plot.x, plot.y)
-                                            }
-                                        }
-                                        drawPath(
-                                            path = humidityPath,
-                                            color = Color.Cyan,
-                                            style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                                        )
-                                        val pressurePath = Path()
-                                        environmentalLog.forEachIndexed { index, log ->
-                                            val plot =
-                                                getPlot(size, graphPadding, log.pressure, maxPressure, minPressure, log.date, start, end)
-                                            if (index == 0) {
-                                                pressurePath.moveTo(plot.x, plot.y)
-                                            } else {
-                                                pressurePath.lineTo(plot.x, plot.y)
-                                            }
-                                        }
-                                        drawPath(
-                                            path = pressurePath,
-                                            color = Color.Green,
-                                            style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                                        )
-
-                                        selectedLog?.let { target ->
-                                            val top = getPlot(size, graphPadding, 1f, 0f, 1f, target.date, start, end)
-                                            val bottom = getPlot(size, graphPadding, 0f, 0f, 1f, target.date, start, end)
-                                            drawLine(Color.White, Offset(top.x, top.y), Offset(bottom.x, bottom.y))
-                                        }
-                                        drawLine(
-                                            color = Color.White,
-                                            start = Offset(graphPadding.left, graphPadding.top),
-                                            end = Offset(size.width - graphPadding.right, graphPadding.top),
-                                            strokeWidth = 1.5f,
-                                            cap = StrokeCap.Round
-                                        )
-                                        drawLine(
-                                            color = Color.White,
-                                            start = Offset(graphPadding.left, size.height - graphPadding.bottom),
-                                            end = Offset(size.width - graphPadding.right, size.height - graphPadding.bottom),
-                                            strokeWidth = 1.5f,
-                                            cap = StrokeCap.Round
-                                        )
+                                    val graphPadding = with(density) {
+                                        RectF(8.dp.toPx(), 8.sp.toPx(), 8.dp.toPx(), 8.sp.toPx())
                                     }
-                                )
-                                Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+
+                                    repeat(3) {
+                                        val plotS = getPlot(size, graphPadding, it.toFloat(), 3f, -1f, Date(0), Date(0), Date(1))
+                                        val plotE = getPlot(size, graphPadding, it.toFloat(), 3f, -1f, Date(1), Date(0), Date(1))
+                                        drawLine(Colors.PALE_WHITE.copy(alpha = 0.5f), Offset(plotS.x, plotS.y), Offset(plotE.x, plotE.y))
+                                    }
+
+                                    val temperaturePath = Path()
+                                    val humidityPath = Path()
+                                    val pressurePath = Path()
+                                    environmentalLog.forEachIndexed { index, log ->
+                                        val temperaturePlot =
+                                            getPlot(size, graphPadding, log.temperature, maxTemperature, minTemperature, log.date, start, end)
+                                        if (index == 0) {
+                                            temperaturePath.moveTo(temperaturePlot.x, temperaturePlot.y)
+                                        } else {
+                                            temperaturePath.lineTo(temperaturePlot.x, temperaturePlot.y)
+                                        }
+
+                                        val humidityPlot =
+                                            getPlot(size, graphPadding, log.humidity, maxHumidity, minHumidity, log.date, start, end)
+                                        if (index == 0) {
+                                            humidityPath.moveTo(humidityPlot.x, humidityPlot.y)
+                                        } else {
+                                            humidityPath.lineTo(humidityPlot.x, humidityPlot.y)
+                                        }
+
+                                        val pressurePlot =
+                                            getPlot(size, graphPadding, log.pressure, maxPressure, minPressure, log.date, start, end)
+                                        if (index == 0) {
+                                            pressurePath.moveTo(pressurePlot.x, pressurePlot.y)
+                                        } else {
+                                            pressurePath.lineTo(pressurePlot.x, pressurePlot.y)
+                                        }
+                                    }
+                                    drawPath(
+                                        path = temperaturePath,
+                                        color = Color.Yellow,
+                                        style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                    )
+                                    drawPath(
+                                        path = humidityPath,
+                                        color = Color.Cyan,
+                                        style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                    )
+                                    drawPath(
+                                        path = pressurePath,
+                                        color = Color.Green,
+                                        style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                    )
+
+                                    val soilHumidityPath = Path()
+                                    soilHumidityLog.forEachIndexed { index, log ->
+                                        val soilHumidityPlot =
+                                            getPlot(size, graphPadding, log.value.toFloat(), maxSoilHumidity, minSoilHumidity, log.date, start, end)
+                                        if (index == 0) {
+                                            soilHumidityPath.moveTo(soilHumidityPlot.x, soilHumidityPlot.y)
+                                        } else {
+                                            soilHumidityPath.lineTo(soilHumidityPlot.x, soilHumidityPlot.y)
+                                        }
+                                    }
+                                    drawPath(
+                                        path = soilHumidityPath,
+                                        color = Color(0xffff8000),
+                                        style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                    )
+
+                                    targetDate?.let {
+                                        val top = getPlot(size, graphPadding, 1f, 0f, 1f, it, start, end)
+                                        val bottom = getPlot(size, graphPadding, 0f, 0f, 1f, it, start, end)
+                                        drawLine(Color.White, Offset(top.x, top.y), Offset(bottom.x, bottom.y))
+                                    }
+                                    drawLine(
+                                        color = Color.White,
+                                        start = Offset(graphPadding.left, graphPadding.top),
+                                        end = Offset(size.width - graphPadding.right, graphPadding.top),
+                                        strokeWidth = 1.5f,
+                                        cap = StrokeCap.Round
+                                    )
+                                    drawLine(
+                                        color = Color.White,
+                                        start = Offset(graphPadding.left, size.height - graphPadding.bottom),
+                                        end = Offset(size.width - graphPadding.right, size.height - graphPadding.bottom),
+                                        strokeWidth = 1.5f,
+                                        cap = StrokeCap.Round
+                                    )
+                                }
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxHeight(),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
                                     Text(
                                         text = "${maxPressure.toInt()} hPa",
                                         color = Color.Green,
@@ -650,62 +714,88 @@ class MainActivity : AppCompatActivity() {
                                             .padding(horizontal = 4.dp)
                                     )
                                 }
-                            }
-                            Column(modifier = Modifier.fillMaxHeight()) {
-                                Text(text = "${maxHumidity.toInt()} %", color = Color.Cyan, fontSize = 10.sp)
-                                Spacer(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .weight(1f)
-                                )
-                                Text(text = "${minHumidity.toInt()} %", color = Color.Cyan, fontSize = 10.sp)
+                                Column(
+                                    modifier = Modifier.fillMaxHeight(),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "${maxSoilHumidity.toInt()} %",
+                                        color = Color(0xffff8000),
+                                        fontSize = 10.sp,
+                                        modifier = Modifier
+                                            .background(color = Colors.TEAL900)
+                                            .padding(horizontal = 4.dp)
+                                    )
+                                    Spacer(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .weight(1f)
+                                    )
+                                    Text(
+                                        text = "${minSoilHumidity.toInt()} %",
+                                        color = Color(0xffff8000),
+                                        fontSize = 10.sp,
+                                        modifier = Modifier
+                                            .background(color = Colors.TEAL900)
+                                            .padding(horizontal = 4.dp)
+                                    )
+                                }
                             }
                         }
-                        Row(modifier = Modifier.padding(start = 8.dp, top = 4.dp, end = 8.dp)) {
-                            val startText = get<SimpleDateFormat>().format(start).split(' ')
-                            val endText = get<SimpleDateFormat>().format(end).split(' ')
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(text = startText[0], color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                Text(text = startText[1], color = Color.White, fontSize = 10.sp)
-                            }
+                        Column(modifier = Modifier.fillMaxHeight()) {
+                            Text(text = "${maxHumidity.toInt()} %", color = Color.Cyan, fontSize = 10.sp)
                             Spacer(
                                 modifier = Modifier
-                                    .fillMaxWidth()
+                                    .fillMaxHeight()
                                     .weight(1f)
                             )
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(text = endText[0], color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                Text(text = endText[1], color = Color.White, fontSize = 10.sp)
-                            }
-                        }
-                        Row(
-                            modifier = Modifier
-                                .padding(top = 12.dp)
-                                .fillMaxWidth(),
-                            horizontalArrangement = Center
-                        ) {
-                            Column(modifier = Modifier.padding(end = 4.dp)) {
-                                Text(text = "🔼", fontSize = 10.sp)
-                                Text(text = "🔽", fontSize = 10.sp)
-                            }
-                            Column(modifier = Modifier.padding(end = 8.dp)) {
-                                Text(text = "${environmentalLog.maxBy { it.temperature }.temperature} ℃", fontSize = 10.sp, color = Color.Yellow)
-                                Text(text = "${environmentalLog.minBy { it.temperature }.temperature} ℃", fontSize = 10.sp, color = Color.Yellow)
-                            }
-                            Column(modifier = Modifier.padding(end = 8.dp)) {
-                                Text(text = "${environmentalLog.maxBy { it.humidity }.humidity} %", fontSize = 10.sp, color = Color.Cyan)
-                                Text(text = "${environmentalLog.minBy { it.humidity }.humidity} %", fontSize = 10.sp, color = Color.Cyan)
-                            }
-                            Column {
-                                Text(text = "${environmentalLog.maxBy { it.pressure }.pressure} hPa", fontSize = 10.sp, color = Color.Green)
-                                Text(text = "${environmentalLog.minBy { it.pressure }.pressure} hPa", fontSize = 10.sp, color = Color.Green)
-                            }
+                            Text(text = "${minHumidity.toInt()} %", color = Color.Cyan, fontSize = 10.sp)
                         }
                     }
-                },
-                backgroundColor = Colors.TEAL900
-            )
-        }
+                    Row(modifier = Modifier.padding(start = 8.dp, top = 4.dp, end = 8.dp)) {
+                        val startText = get<SimpleDateFormat>().format(start).split(' ')
+                        val endText = get<SimpleDateFormat>().format(end).split(' ')
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(text = startText[0], color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(text = startText[1], color = Color.White, fontSize = 10.sp)
+                        }
+                        Spacer(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        )
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(text = endText[0], color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(text = endText[1], color = Color.White, fontSize = 10.sp)
+                        }
+                    }
+                    Row(
+                        modifier = Modifier
+                            .padding(top = 12.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Center
+                    ) {
+                        Column(modifier = Modifier.padding(end = 4.dp)) {
+                            Text(text = "🔼", fontSize = 10.sp)
+                            Text(text = "🔽", fontSize = 10.sp)
+                        }
+                        Column(modifier = Modifier.padding(end = 8.dp)) {
+                            Text(text = "${environmentalLog.maxBy { it.temperature }.temperature} ℃", fontSize = 10.sp, color = Color.Yellow)
+                            Text(text = "${environmentalLog.minBy { it.temperature }.temperature} ℃", fontSize = 10.sp, color = Color.Yellow)
+                        }
+                        Column(modifier = Modifier.padding(end = 8.dp)) {
+                            Text(text = "${environmentalLog.maxBy { it.humidity }.humidity} %", fontSize = 10.sp, color = Color.Cyan)
+                            Text(text = "${environmentalLog.minBy { it.humidity }.humidity} %", fontSize = 10.sp, color = Color.Cyan)
+                        }
+                        Column {
+                            Text(text = "${environmentalLog.maxBy { it.pressure }.pressure} hPa", fontSize = 10.sp, color = Color.Green)
+                            Text(text = "${environmentalLog.minBy { it.pressure }.pressure} hPa", fontSize = 10.sp, color = Color.Green)
+                        }
+                    }
+                }
+            },
+            backgroundColor = Colors.TEAL900
+        )
     }
 
     @Composable

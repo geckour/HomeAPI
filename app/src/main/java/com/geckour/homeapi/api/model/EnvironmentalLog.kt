@@ -1,5 +1,6 @@
 package com.geckour.homeapi.api.model
 
+import com.geckour.homeapi.api.DateSerializer
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -19,16 +20,3 @@ data class EnvironmentalLog(
     @Serializable(with = DateSerializer::class)
     val date: Date
 )
-
-class DateSerializer : KSerializer<Date> {
-
-    override val descriptor: SerialDescriptor
-        get() = PrimitiveSerialDescriptor(Date::class.java.name, PrimitiveKind.STRING)
-
-    override fun deserialize(decoder: Decoder): Date =
-        checkNotNull(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.JAPAN).parse(decoder.decodeString()))
-
-    override fun serialize(encoder: Encoder, value: Date) {
-        encoder.encodeString(value.toString())
-    }
-}

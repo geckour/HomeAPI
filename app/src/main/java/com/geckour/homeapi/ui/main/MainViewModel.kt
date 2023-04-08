@@ -2,9 +2,6 @@ package com.geckour.homeapi.ui.main
 
 import android.content.SharedPreferences
 import android.net.wifi.WifiManager
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,10 +11,12 @@ import com.geckour.homeapi.api.AmpCommand
 import com.geckour.homeapi.api.CeilingLightCommand
 import com.geckour.homeapi.api.model.EnvironmentalData
 import com.geckour.homeapi.api.model.EnvironmentalLog
+import com.geckour.homeapi.api.model.SoilHumidityLog
 import com.geckour.homeapi.model.RequestData
 import com.geckour.homeapi.util.isInHome
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -28,8 +27,7 @@ class MainViewModel(
     private val apiServiceForMobile: APIService
 ) : ViewModel() {
 
-    internal var data: MainData by mutableStateOf(MainData(temperature = sharedPreferences.getFloat(PREF_KEY_TEMPERATURE, 20f)))
-        private set
+    internal val data = MutableStateFlow(MainData(temperature = sharedPreferences.getFloat(PREF_KEY_TEMPERATURE, 20f)))
 
     private val ceilingLightItems = listOf(
         RequestData("🌑", "消灯") { sendCeilingLight(CeilingLightCommand.OFF) },
@@ -83,22 +81,22 @@ class MainViewModel(
     private fun onFailure(throwable: Throwable) {
         if (throwable is CancellationException) return
 
-        data = data.copy(isLoading = false, error = throwable)
+        data.value = data.value.copy(isLoading = false, error = throwable)
         Timber.e(throwable)
     }
 
     private fun sendCeilingLight(command: CeilingLightCommand) {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
-            data = data.copy(isLoading = true, error = null)
+            data.value = data.value.copy(isLoading = true, error = null)
             runCatching {
                 (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
                     .ceilingLight(
-                        roomId = data.room.id,
+                        roomId = data.value.room.id,
                         command = command.rawValue
                     )
             }
-                .onSuccess { data = data.copy(isLoading = false) }
+                .onSuccess { data.value = data.value.copy(isLoading = false) }
                 .onFailure { onFailure(it) }
         }
     }
@@ -106,32 +104,43 @@ class MainViewModel(
     internal fun requestEnvironmentalData() {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
-            data = data.copy(isLoading = true, error = null)
+            data.value = data.value.copy(isLoading = true, error = null)
             runCatching {
                 (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
                     .getEnvironmentalData()
             }
                 .onFailure { onFailure(it) }
-                .onSuccess { data = data.copy(isLoading = false, environmentalData = it.data) }
+                .onSuccess { data.value = data.value.copy(isLoading = false, environmentalData = it.data) }
         }
     }
 
-    internal fun requestEnvironmentalLog(id: String, end: Long = System.currentTimeMillis() / 1000, start: Long = end - 86400) {
+    internal fun requestLogDialogData(end: Long = System.currentTimeMillis() / 1000, start: Long = end - 86400) {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
-            data = data.copy(isLoading = true, error = null)
+            data.value = data.value.copy(isLoading = true, error = null)
             runCatching {
-                (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
+                val environmentalLog = requestEnvironmentalLog("D8:BF:C0:D0:09:07", end, start)
+                val soilHumidityLog = requestSoilHumidityLog("D8:BF:C0:D0:09:0C", end, start)
+                data.value = data.value.copy(isLoading = false, environmentalLogData = environmentalLog, soilHumidityLogData = soilHumidityLog)
+            }.onFailure { onFailure(it) }
+        }
+    }
+
+    private suspend fun requestEnvironmentalLog(id: String, end: Long, start: Long): List<EnvironmentalLog> =
+        (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
                     .getEnvironmentalLog(
                         id = id,
                         end = end,
                         start = start
-                    )
-            }
-                .onFailure { onFailure(it) }
-                .onSuccess { data = data.copy(isLoading = false, environmentalLogData = it.data) }
-        }
-    }
+                    ).data
+
+    private suspend fun requestSoilHumidityLog(id: String, end: Long, start: Long): List<SoilHumidityLog> =
+                (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
+                    .getSoilHumidityLog(
+                        id = id,
+                        end = end,
+                        start = start
+                    ).data
 
     internal fun sendSignal(signal: Boolean) {
         cancelPendingRequest()
@@ -144,34 +153,34 @@ class MainViewModel(
     }
 
     internal fun clearEnvironmentalData() {
-        data = data.copy(environmentalData = null)
+        data.value = data.value.copy(environmentalData = null)
     }
 
     internal fun clearEnvironmentalLogData() {
-        data = data.copy(environmentalLogData = null)
+        data.value = data.value.copy(environmentalLogData = null)
     }
 
     internal fun upTemperature() {
-        saveTemperature(data.temperature + 0.5f)
+        saveTemperature(data.value.temperature + 0.5f)
     }
 
     internal fun downTemperature() {
-        saveTemperature(data.temperature - 0.5f)
+        saveTemperature(data.value.temperature - 0.5f)
     }
 
     private fun saveTemperature(temperature: Float) {
         sharedPreferences.edit(commit = true) { putFloat(PREF_KEY_TEMPERATURE, temperature) }
-        data = data.copy(temperature = temperature)
+        data.value = data.value.copy(temperature = temperature)
     }
 
     internal fun setRoom(room: Room) {
-        data = data.copy(room = room)
+        data.value = data.value.copy(room = room)
     }
 
     private fun sendAirCond(runMode: Int) {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
-            data = data.copy(isLoading = true, error = null)
+            data.value = data.value.copy(isLoading = true, error = null)
             runCatching {
                 (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
                     .airCond(
@@ -181,7 +190,7 @@ class MainViewModel(
                         )
                     )
             }
-                .onSuccess { data = data.copy(isLoading = false) }
+                .onSuccess { data.value = data.value.copy(isLoading = false) }
                 .onFailure { onFailure(it) }
         }
     }
@@ -189,12 +198,12 @@ class MainViewModel(
     private fun sendAmp(command: AmpCommand) {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
-            data = data.copy(isLoading = true, error = null)
+            data.value = data.value.copy(isLoading = true, error = null)
             runCatching {
                 (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
                     .amp(command = command.rawValue)
             }
-                .onSuccess { data = data.copy(isLoading = false) }
+                .onSuccess { data.value = data.value.copy(isLoading = false) }
                 .onFailure { onFailure(it) }
         }
     }
@@ -203,6 +212,7 @@ class MainViewModel(
         val room: Room = Room.LIVING,
         val environmentalData: EnvironmentalData? = null,
         val environmentalLogData: List<EnvironmentalLog>? = null,
+        val soilHumidityLogData: List<SoilHumidityLog>? = null,
         val temperature: Float = 20f,
         val isLoading: Boolean = false,
         val error: Throwable? = null,
