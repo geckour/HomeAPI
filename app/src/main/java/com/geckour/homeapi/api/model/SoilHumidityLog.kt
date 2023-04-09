@@ -8,7 +8,7 @@ import java.util.*
 @Serializable
 data class SoilHumidityLog(
     val id: String,
-    val value: Int,
+    val value: Float,
     @SerialName("raw_value")
     val rawValue: Int,
     @Serializable(with = DateSerializer::class)
