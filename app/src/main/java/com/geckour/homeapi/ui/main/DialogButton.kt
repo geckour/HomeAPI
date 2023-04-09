@@ -29,10 +29,10 @@ object DialogButton {
     }
     
     @Composable
-    fun LogDialogButton(onRequestData: () -> Unit, onHaptic: () -> Unit) {
+    fun LogDialogButton(onRequestData: (range: Dialog.Range) -> Unit, onHaptic: () -> Unit, currentRange: Dialog.Range) {
         Button(
             onClick = {
-                onRequestData()
+                onRequestData(currentRange)
                 onHaptic()
             },
             colors = ButtonDefaults.buttonColors(backgroundColor = Colors.TEAL700),

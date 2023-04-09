@@ -35,13 +35,18 @@ import kotlinx.coroutines.launch
 
 object Bar {
 
+    enum class Room(val id: String) {
+        LIVING("0"),
+        KITCHEN("1")
+    }
+
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun TopBar(
-        onSetRoom: (room: MainViewModel.Room) -> Unit,
+        onSetRoom: (room: Room) -> Unit,
         onSendSignal: (signal: Boolean) -> Unit,
         onHaptic: () -> Unit,
-        currentRoom: MainViewModel.Room
+        currentRoom: Room
     ) {
         TopAppBar(contentPadding = PaddingValues(horizontal = 16.dp)) {
             Text(
@@ -67,22 +72,22 @@ object Bar {
             Button(
                 modifier = Modifier.padding(end = 8.dp),
                 onClick = {
-                    onSetRoom(MainViewModel.Room.LIVING)
+                    onSetRoom(Room.LIVING)
                     onHaptic()
                 },
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = if (currentRoom == MainViewModel.Room.LIVING) Colors.TEAL700 else Colors.TEAL900
+                    backgroundColor = if (currentRoom == Room.LIVING) Colors.TEAL700 else Colors.TEAL900
                 )
             ) {
                 Text(text = "居室")
             }
             Button(
                 onClick = {
-                    onSetRoom(MainViewModel.Room.KITCHEN)
+                    onSetRoom(Room.KITCHEN)
                     onHaptic()
                 },
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = if (currentRoom == MainViewModel.Room.KITCHEN) Colors.TEAL700 else Colors.TEAL900
+                    backgroundColor = if (currentRoom == Room.KITCHEN) Colors.TEAL700 else Colors.TEAL900
                 )
             ) {
                 Text(text = "台所")
@@ -95,8 +100,9 @@ object Bar {
     fun BottomBar(
         pagerState: PagerState,
         onRequestEnvironmentalData: () -> Unit,
-        onRequestLogData: () -> Unit,
-        onHaptic: () -> Unit
+        onRequestLogData: (range: Dialog.Range) -> Unit,
+        onHaptic: () -> Unit,
+        currentRange: Dialog.Range
     ) {
         val coroutineScope = rememberCoroutineScope()
         Column {
@@ -108,7 +114,7 @@ object Bar {
             ) {
                 DialogButton.EnvironmentalDialogButton(onRequestData = onRequestEnvironmentalData, onHaptic = onHaptic)
                 Spacer(modifier = Modifier.width(8.dp))
-                DialogButton.LogDialogButton(onRequestData = onRequestLogData, onHaptic = onHaptic)
+                DialogButton.LogDialogButton(onRequestData = onRequestLogData, onHaptic = onHaptic, currentRange = currentRange)
             }
             BottomNavigation {
                 Page.Screen.values().forEachIndexed { index, screen ->

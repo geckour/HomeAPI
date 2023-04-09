@@ -126,6 +126,10 @@ class MainViewModel(
         }
     }
 
+    internal fun requestLogDialogDataWithRange(range: Dialog.Range, end: Long = System.currentTimeMillis() / 1000) {
+        requestLogDialogData(end = end, start = end - range.duration)
+    }
+
     private suspend fun requestEnvironmentalLog(id: String, end: Long, start: Long): List<EnvironmentalLog> =
         (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
                     .getEnvironmentalLog(
@@ -173,7 +177,7 @@ class MainViewModel(
         data.value = data.value.copy(temperature = temperature)
     }
 
-    internal fun setRoom(room: Room) {
+    internal fun setRoom(room: Bar.Room) {
         data.value = data.value.copy(room = room)
     }
 
@@ -209,7 +213,7 @@ class MainViewModel(
     }
 
     data class MainData(
-        val room: Room = Room.LIVING,
+        val room: Bar.Room = Bar.Room.LIVING,
         val environmentalData: EnvironmentalData? = null,
         val environmentalLogData: List<EnvironmentalLog>? = null,
         val soilHumidityLogData: List<SoilHumidityLog>? = null,
@@ -217,9 +221,4 @@ class MainViewModel(
         val isLoading: Boolean = false,
         val error: Throwable? = null,
     )
-
-    enum class Room(val id: String) {
-        LIVING("0"),
-        KITCHEN("1")
-    }
 }

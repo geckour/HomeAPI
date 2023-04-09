@@ -21,7 +21,10 @@ import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,8 +54,9 @@ class MainActivity : AppCompatActivity() {
             MaterialTheme(colors = if (isSystemInDarkTheme()) DarkColors else LightColors) {
                 val data by viewModel.data.collectAsStateWithLifecycle()
                 val scaffoldState = rememberScaffoldState()
+                var currentRange by remember { mutableStateOf(Dialog.Range.DAY) }
 
-                Content(scaffoldState = scaffoldState, data = data)
+                Content(scaffoldState = scaffoldState, data = data, currentRange)
                 Loading(data = data)
                 Error(data = data, scaffoldState = scaffoldState)
 
@@ -67,7 +71,12 @@ class MainActivity : AppCompatActivity() {
                         soilHumidityLogData = soilHumidityLogData,
                         simpleDateFormat = get(),
                         onClearData = viewModel::clearEnvironmentalLogData,
-                        onHaptic = ::haptic
+                        onNewRange = {
+                            currentRange = it
+                            viewModel.requestLogDialogDataWithRange(range = it)
+                        },
+                        onHaptic = ::haptic,
+                        currentRange = currentRange
                     )
                 }
             }
@@ -76,7 +85,7 @@ class MainActivity : AppCompatActivity() {
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
-    fun Content(scaffoldState: ScaffoldState, data: MainViewModel.MainData) {
+    fun Content(scaffoldState: ScaffoldState, data: MainViewModel.MainData, currentRange: Dialog.Range) {
         Column(verticalArrangement = Bottom, modifier = Modifier.fillMaxSize()) {
             val pagerState = rememberPagerState()
 
@@ -94,8 +103,9 @@ class MainActivity : AppCompatActivity() {
                     Bar.BottomBar(
                         pagerState = pagerState,
                         onRequestEnvironmentalData = viewModel::requestEnvironmentalData,
-                        onRequestLogData = viewModel::requestLogDialogData,
-                        onHaptic = ::haptic
+                        onRequestLogData = viewModel::requestLogDialogDataWithRange,
+                        onHaptic = ::haptic,
+                        currentRange = currentRange
                     )
                 }
             ) { innerPadding ->

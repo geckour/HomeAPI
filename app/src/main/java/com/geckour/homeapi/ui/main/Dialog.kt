@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.geckour.homeapi.api.model.EnvironmentalData
@@ -105,7 +106,9 @@ object Dialog {
         soilHumidityLogData: List<SoilHumidityLog>,
         simpleDateFormat: SimpleDateFormat,
         onClearData: () -> Unit,
-        onHaptic: () -> Unit
+        onNewRange: (range: Range) -> Unit,
+        onHaptic: () -> Unit,
+        currentRange: Range
     ) {
         val dates = (environmentalLogData.map { it.date } + soilHumidityLogData.map { it.date })
         AlertDialog(
@@ -121,15 +124,6 @@ object Dialog {
                 ) {
                     Text(text = "OK")
                 }
-            },
-            title = {
-                Text(
-                    text = "📈 グラフ",
-                    fontSize = 24.sp,
-                    color = MaterialTheme.colors.onBackground,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
             },
             text = {
                 val getPlot =
@@ -152,6 +146,58 @@ object Dialog {
                 ) {
                     val start = dates.minOrNull() ?: return@AlertDialog
                     val end = dates.maxOrNull() ?: return@AlertDialog
+
+                    Text(
+                        text = "📈 グラフ",
+                        fontSize = 24.sp,
+                        color = MaterialTheme.colors.onBackground,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Start
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Button(
+                            modifier = Modifier.padding(end = 8.dp),
+                            onClick = {
+                                onNewRange(Range.MONTH)
+                                onHaptic()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = if (currentRange == Range.MONTH) Colors.TEAL200 else Colors.TAR_BLACK
+                            )
+                        ) {
+                            Text(text = "1M")
+                        }
+                        Button(
+                            modifier = Modifier.padding(end = 8.dp),
+                            onClick = {
+                                onNewRange(Range.WEEK)
+                                onHaptic()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = if (currentRange == Range.WEEK) Colors.TEAL200 else Colors.TAR_BLACK
+                            )
+                        ) {
+                            Text(text = "1w")
+                        }
+                        Button(
+                            onClick = {
+                                onNewRange(Range.DAY)
+                                onHaptic()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = if (currentRange == Range.DAY) Colors.TEAL200 else Colors.TAR_BLACK
+                            )
+                        ) {
+                            Text(text = "1d")
+                        }
+                    }
 
                     var selectedEnvironmentalLog by remember { mutableStateOf<EnvironmentalLog?>(null) }
                     var selectedSoilHumidityLog by remember { mutableStateOf<SoilHumidityLog?>(null) }
@@ -462,5 +508,11 @@ object Dialog {
             },
             backgroundColor = Colors.TEAL900
         )
+    }
+
+    enum class Range(val duration: Long) {
+        DAY(86400),
+        WEEK(604800),
+        MONTH(18144000)
     }
 }
