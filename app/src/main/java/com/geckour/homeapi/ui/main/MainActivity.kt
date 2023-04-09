@@ -162,7 +162,10 @@ class MainActivity : AppCompatActivity() {
                         )
                         Button(
                             modifier = Modifier.padding(end = 8.dp),
-                            onClick = { viewModel.setRoom(MainViewModel.Room.LIVING) },
+                            onClick = {
+                                viewModel.setRoom(MainViewModel.Room.LIVING)
+                                haptic()
+                            },
                             colors = ButtonDefaults.buttonColors(
                                 backgroundColor = if (data.room == MainViewModel.Room.LIVING) Colors.TEAL700 else Colors.TEAL900
                             )
@@ -170,7 +173,10 @@ class MainActivity : AppCompatActivity() {
                             Text(text = "居室")
                         }
                         Button(
-                            onClick = { viewModel.setRoom(MainViewModel.Room.KITCHEN) },
+                            onClick = {
+                                viewModel.setRoom(MainViewModel.Room.KITCHEN)
+                                haptic()
+                            },
                             colors = ButtonDefaults.buttonColors(
                                 backgroundColor = if (data.room == MainViewModel.Room.KITCHEN) Colors.TEAL700 else Colors.TEAL900
                             )
