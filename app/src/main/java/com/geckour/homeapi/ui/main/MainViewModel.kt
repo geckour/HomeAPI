@@ -67,9 +67,9 @@ class MainViewModel(
         RequestData("🍣", "SOURCE DIRECT") { sendAmp(AmpCommand.MODE_TOGGLE_SOURCE_DIRECT) },
     )
     internal val items = mapOf(
-        Screen.CEILING_LIGHT to ceilingLightItems,
-        Screen.AIR_COND to airCondItems,
-        Screen.AMP to ampItems,
+        Page.Screen.CEILING_LIGHT to ceilingLightItems,
+        Page.Screen.AIR_COND to airCondItems,
+        Page.Screen.AMP to ampItems,
     )
 
     private var pendingRequest: Job? = null
@@ -217,12 +217,6 @@ class MainViewModel(
         val isLoading: Boolean = false,
         val error: Throwable? = null,
     )
-
-    enum class Screen(val title: String) {
-        CEILING_LIGHT("天井灯"),
-        AIR_COND("エアコン"),
-        AMP("アンプ")
-    }
 
     enum class Room(val id: String) {
         LIVING("0"),
