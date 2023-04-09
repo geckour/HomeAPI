@@ -5,6 +5,8 @@ import android.graphics.RectF
 import android.view.MotionEvent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,13 +17,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -147,6 +152,11 @@ object Dialog {
                     val start = dates.minOrNull() ?: return@AlertDialog
                     val end = dates.maxOrNull() ?: return@AlertDialog
 
+                    var isTemperatureEnabled by remember { mutableStateOf(true) }
+                    var isHumidityEnabled by remember { mutableStateOf(true) }
+                    var isPressureEnabled by remember { mutableStateOf(true) }
+                    var isSoilHumidityEnabled by remember { mutableStateOf(true) }
+
                     Text(
                         text = "📈 グラフ",
                         fontSize = 24.sp,
@@ -197,6 +207,61 @@ object Dialog {
                         ) {
                             Text(text = "1d")
                         }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .padding(vertical = 4.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Box(
+                            Modifier
+                                .padding(end = 8.dp)
+                                .background(
+                                    shape = CircleShape,
+                                    color = if (isTemperatureEnabled) Color.Yellow else Color.Yellow.copy(alpha = 0.4f)
+                                )
+                                .size(24.dp)
+                                .clickable(interactionSource = MutableInteractionSource(), indication = rememberRipple()) {
+                                    isTemperatureEnabled = isTemperatureEnabled.not()
+                                }
+                        )
+                        Box(
+                            Modifier
+                                .padding(end = 8.dp)
+                                .background(
+                                    shape = CircleShape,
+                                    color = if (isHumidityEnabled) Color.Cyan else Color.Cyan.copy(alpha = 0.4f)
+                                )
+                                .size(24.dp)
+                                .clickable(interactionSource = MutableInteractionSource(), indication = rememberRipple()) {
+                                    isHumidityEnabled = isHumidityEnabled.not()
+                                }
+                        )
+                        Box(
+                            Modifier
+                                .padding(end = 8.dp)
+                                .background(
+                                    shape = CircleShape,
+                                    color = if (isPressureEnabled) Color.Green else Color.Green.copy(alpha = 0.4f)
+                                )
+                                .size(24.dp)
+                                .clickable(interactionSource = MutableInteractionSource(), indication = rememberRipple()) {
+                                    isPressureEnabled = isPressureEnabled.not()
+                                }
+                        )
+                        Box(
+                            Modifier
+                                .background(
+                                    shape = CircleShape,
+                                    color = if (isSoilHumidityEnabled) Color(0xffff8000) else Color(0x66ff8000)
+                                )
+                                .size(24.dp)
+                                .clickable(interactionSource = MutableInteractionSource(), indication = rememberRipple()) {
+                                    isSoilHumidityEnabled = isSoilHumidityEnabled.not()
+                                }
+                        )
                     }
 
                     var selectedEnvironmentalLog by remember { mutableStateOf<EnvironmentalLog?>(null) }
@@ -315,61 +380,75 @@ object Dialog {
                                     val humidityPath = Path()
                                     val pressurePath = Path()
                                     environmentalLogData.forEachIndexed { index, log ->
-                                        val temperaturePlot =
-                                            getPlot(size, graphPadding, log.temperature, maxTemperature, minTemperature, log.date, start, end)
-                                        if (index == 0) {
-                                            temperaturePath.moveTo(temperaturePlot.x, temperaturePlot.y)
-                                        } else {
-                                            temperaturePath.lineTo(temperaturePlot.x, temperaturePlot.y)
+                                        if (isTemperatureEnabled) {
+                                            val temperaturePlot =
+                                                getPlot(size, graphPadding, log.temperature, maxTemperature, minTemperature, log.date, start, end)
+                                            if (index == 0) {
+                                                temperaturePath.moveTo(temperaturePlot.x, temperaturePlot.y)
+                                            } else {
+                                                temperaturePath.lineTo(temperaturePlot.x, temperaturePlot.y)
+                                            }
                                         }
 
-                                        val humidityPlot =
-                                            getPlot(size, graphPadding, log.humidity, maxHumidity, minHumidity, log.date, start, end)
-                                        if (index == 0) {
-                                            humidityPath.moveTo(humidityPlot.x, humidityPlot.y)
-                                        } else {
-                                            humidityPath.lineTo(humidityPlot.x, humidityPlot.y)
+                                        if (isHumidityEnabled) {
+                                            val humidityPlot =
+                                                getPlot(size, graphPadding, log.humidity, maxHumidity, minHumidity, log.date, start, end)
+                                            if (index == 0) {
+                                                humidityPath.moveTo(humidityPlot.x, humidityPlot.y)
+                                            } else {
+                                                humidityPath.lineTo(humidityPlot.x, humidityPlot.y)
+                                            }
                                         }
 
-                                        val pressurePlot =
-                                            getPlot(size, graphPadding, log.pressure, maxPressure, minPressure, log.date, start, end)
-                                        if (index == 0) {
-                                            pressurePath.moveTo(pressurePlot.x, pressurePlot.y)
-                                        } else {
-                                            pressurePath.lineTo(pressurePlot.x, pressurePlot.y)
+                                        if (isPressureEnabled) {
+                                            val pressurePlot =
+                                                getPlot(size, graphPadding, log.pressure, maxPressure, minPressure, log.date, start, end)
+                                            if (index == 0) {
+                                                pressurePath.moveTo(pressurePlot.x, pressurePlot.y)
+                                            } else {
+                                                pressurePath.lineTo(pressurePlot.x, pressurePlot.y)
+                                            }
                                         }
                                     }
-                                    drawPath(
-                                        path = temperaturePath,
-                                        color = Color.Yellow,
-                                        style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                                    )
-                                    drawPath(
-                                        path = humidityPath,
-                                        color = Color.Cyan,
-                                        style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                                    )
-                                    drawPath(
-                                        path = pressurePath,
-                                        color = Color.Green,
-                                        style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                                    )
-
-                                    val soilHumidityPath = Path()
-                                    soilHumidityLogData.forEachIndexed { index, log ->
-                                        val soilHumidityPlot =
-                                            getPlot(size, graphPadding, log.value, maxSoilHumidity, minSoilHumidity, log.date, start, end)
-                                        if (index == 0) {
-                                            soilHumidityPath.moveTo(soilHumidityPlot.x, soilHumidityPlot.y)
-                                        } else {
-                                            soilHumidityPath.lineTo(soilHumidityPlot.x, soilHumidityPlot.y)
-                                        }
+                                    if (isTemperatureEnabled) {
+                                        drawPath(
+                                            path = temperaturePath,
+                                            color = Color.Yellow,
+                                            style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                        )
                                     }
-                                    drawPath(
-                                        path = soilHumidityPath,
-                                        color = Color(0xffff8000),
-                                        style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                                    )
+                                    if (isHumidityEnabled) {
+                                        drawPath(
+                                            path = humidityPath,
+                                            color = Color.Cyan,
+                                            style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                        )
+                                    }
+                                    if (isPressureEnabled) {
+                                        drawPath(
+                                            path = pressurePath,
+                                            color = Color.Green,
+                                            style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                        )
+                                    }
+
+                                    if (isSoilHumidityEnabled) {
+                                        val soilHumidityPath = Path()
+                                        soilHumidityLogData.forEachIndexed { index, log ->
+                                            val soilHumidityPlot =
+                                                getPlot(size, graphPadding, log.value, maxSoilHumidity, minSoilHumidity, log.date, start, end)
+                                            if (index == 0) {
+                                                soilHumidityPath.moveTo(soilHumidityPlot.x, soilHumidityPlot.y)
+                                            } else {
+                                                soilHumidityPath.lineTo(soilHumidityPlot.x, soilHumidityPlot.y)
+                                            }
+                                        }
+                                        drawPath(
+                                            path = soilHumidityPath,
+                                            color = Color(0xffff8000),
+                                            style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                        )
+                                    }
 
                                     targetDate?.let {
                                         val top = getPlot(size, graphPadding, 1f, 0f, 1f, it, start, end)
