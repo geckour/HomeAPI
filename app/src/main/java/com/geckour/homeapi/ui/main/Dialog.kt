@@ -195,7 +195,10 @@ object Dialog {
                                     color = if (isTemperatureEnabled) Color.Yellow else Color.Yellow.copy(alpha = 0.4f)
                                 )
                                 .size(24.dp)
-                                .clickable(interactionSource = MutableInteractionSource(), indication = rememberRipple()) {
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = rememberRipple(bounded = false)
+                                ) {
                                     isTemperatureEnabled = isTemperatureEnabled.not()
                                 }
                         )
@@ -207,7 +210,10 @@ object Dialog {
                                     color = if (isHumidityEnabled) Color.Cyan else Color.Cyan.copy(alpha = 0.4f)
                                 )
                                 .size(24.dp)
-                                .clickable(interactionSource = MutableInteractionSource(), indication = rememberRipple()) {
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = rememberRipple(bounded = false)
+                                ) {
                                     isHumidityEnabled = isHumidityEnabled.not()
                                 }
                         )
@@ -219,7 +225,10 @@ object Dialog {
                                     color = if (isPressureEnabled) Color.Green else Color.Green.copy(alpha = 0.4f)
                                 )
                                 .size(24.dp)
-                                .clickable(interactionSource = MutableInteractionSource(), indication = rememberRipple()) {
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = rememberRipple(bounded = false)
+                                ) {
                                     isPressureEnabled = isPressureEnabled.not()
                                 }
                         )
@@ -230,7 +239,10 @@ object Dialog {
                                     color = if (isSoilHumidityEnabled) Color(0xffff8000) else Color(0x66ff8000)
                                 )
                                 .size(24.dp)
-                                .clickable(interactionSource = MutableInteractionSource(), indication = rememberRipple()) {
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = rememberRipple(bounded = false)
+                                ) {
                                     isSoilHumidityEnabled = isSoilHumidityEnabled.not()
                                 }
                         )
