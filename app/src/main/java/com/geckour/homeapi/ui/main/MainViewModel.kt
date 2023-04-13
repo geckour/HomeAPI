@@ -120,7 +120,7 @@ class MainViewModel(
             data.value = data.value.copy(isLoading = true, error = null)
             runCatching {
                 val environmentalLog = requestEnvironmentalLog("D8:BF:C0:D0:09:07", end, start)
-                val soilHumidityLog = requestSoilHumidityLog("D8:BF:C0:D0:09:0C", end, start)
+                val soilHumidityLog = requestSoilHumidityLog(null, end, start)
                 data.value = data.value.copy(isLoading = false, environmentalLogData = environmentalLog, soilHumidityLogData = soilHumidityLog)
             }.onFailure { onFailure(it) }
         }
@@ -130,7 +130,7 @@ class MainViewModel(
         requestLogDialogData(end = end, start = end - range.duration)
     }
 
-    private suspend fun requestEnvironmentalLog(id: String, end: Long, start: Long): List<EnvironmentalLog> =
+    private suspend fun requestEnvironmentalLog(id: String?, end: Long, start: Long): List<EnvironmentalLog> =
         (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
                     .getEnvironmentalLog(
                         id = id,
@@ -138,7 +138,7 @@ class MainViewModel(
                         start = start
                     ).data
 
-    private suspend fun requestSoilHumidityLog(id: String, end: Long, start: Long): List<SoilHumidityLog> =
+    private suspend fun requestSoilHumidityLog(id: String?, end: Long, start: Long): List<SoilHumidityLog> =
                 (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
                     .getSoilHumidityLog(
                         id = id,

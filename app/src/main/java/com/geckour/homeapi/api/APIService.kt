@@ -31,14 +31,14 @@ interface APIService {
 
     @GET("0/environmental/log")
     suspend fun getEnvironmentalLog(
-        @Query("id") id: String,
+        @Query("id") id: String?,
         @Query("end") end: Long,
         @Query("start") start: Long,
     ): Data<List<EnvironmentalLog>>
 
     @GET("0/soil-humidity/log")
     suspend fun getSoilHumidityLog(
-        @Query("id") id: String,
+        @Query("id") id: String?,
         @Query("end") end: Long,
         @Query("start") start: Long,
     ): Data<List<SoilHumidityLog>>
