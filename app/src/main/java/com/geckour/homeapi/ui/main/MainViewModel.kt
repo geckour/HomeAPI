@@ -119,7 +119,7 @@ class MainViewModel(
         pendingRequest = viewModelScope.launch {
             data.value = data.value.copy(isLoading = true, error = null)
             runCatching {
-                val environmentalLog = requestEnvironmentalLog("D8:BF:C0:D0:09:07", end, start)
+                val environmentalLog = requestEnvironmentalLog(null, end, start)
                 val soilHumidityLog = requestSoilHumidityLog(null, end, start)
                 data.value = data.value.copy(isLoading = false, environmentalLogData = environmentalLog, soilHumidityLogData = soilHumidityLog)
             }.onFailure { onFailure(it) }
