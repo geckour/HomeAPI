@@ -124,6 +124,24 @@ object Dialog {
                     val start = dates.minOrNull() ?: return@AlertDialog
                     val end = dates.maxOrNull() ?: return@AlertDialog
 
+                    val maxTemperature = environmentalLogData.maxByOrNull { it.temperature }?.temperature
+                    val minTemperature = environmentalLogData.minByOrNull { it.temperature }?.temperature
+                    val maxHumidity = environmentalLogData.maxByOrNull { it.humidity }?.humidity
+                    val minHumidity = environmentalLogData.minByOrNull { it.humidity }?.humidity
+                    val maxPressure = environmentalLogData.maxByOrNull { it.pressure }?.pressure
+                    val minPressure = environmentalLogData.minByOrNull { it.pressure }?.pressure
+                    val maxSoilHumidity = soilHumidityLogData.maxByOrNull { it.value }?.value
+                    val minSoilHumidity = soilHumidityLogData.minByOrNull { it.value }?.value
+
+                    val roundedMaxTemperature = maxTemperature?.let { ceil(it / 10) * 10 }
+                    val roundedMinTemperature = minTemperature?.let { floor(it / 10) * 10 }
+                    val roundedMaxHumidity = maxHumidity?.let { ceil(it / 10) * 10 }
+                    val roundedMinHumidity = minHumidity?.let { floor(it / 10) * 10 }
+                    val roundedMaxPressure = maxPressure?.let { ceil(it / 10) * 10 }
+                    val roundedMinPressure = minPressure?.let { floor(it / 10) * 10 }
+                    val roundedMaxSoilHumidity = maxSoilHumidity?.let { ceil(it / 10) * 10 }
+                    val roundedMinSoilHumidity = minSoilHumidity?.let { floor(it / 10) * 10 }
+
                     var isTemperatureEnabled by remember { mutableStateOf(true) }
                     var isHumidityEnabled by remember { mutableStateOf(true) }
                     var isPressureEnabled by remember { mutableStateOf(true) }
@@ -298,22 +316,16 @@ object Dialog {
                     }
 
                     Row(modifier = Modifier.height(160.dp)) {
-                        val maxTemperature = ceil(environmentalLogData.maxBy { it.temperature }.temperature / 10) * 10
-                        val minTemperature = floor(environmentalLogData.minBy { it.temperature }.temperature / 10) * 10
-                        val maxHumidity = ceil(environmentalLogData.maxBy { it.humidity }.humidity / 10) * 10
-                        val minHumidity = floor(environmentalLogData.minBy { it.humidity }.humidity / 10) * 10
-                        val maxPressure = ceil(environmentalLogData.maxBy { it.pressure }.pressure / 10) * 10
-                        val minPressure = floor(environmentalLogData.minBy { it.pressure }.pressure / 10) * 10
-                        val maxSoilHumidity = ceil(soilHumidityLogData.maxBy { it.value }.value / 10) * 10
-                        val minSoilHumidity = floor(soilHumidityLogData.minBy { it.value }.value / 10) * 10
-                        Column(modifier = Modifier.fillMaxHeight()) {
-                            Text(text = "${maxTemperature.toInt()} ℃", color = Color.Yellow, fontSize = 10.sp)
-                            Spacer(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .weight(1f)
-                            )
-                            Text(text = "${minTemperature.toInt()} ℃", color = Color.Yellow, fontSize = 10.sp)
+                        if (roundedMaxTemperature != null && roundedMinTemperature != null) {
+                            Column(modifier = Modifier.fillMaxHeight()) {
+                                Text(text = "${roundedMaxTemperature.toInt()} ℃", color = Color.Yellow, fontSize = 10.sp)
+                                Spacer(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .weight(1f)
+                                )
+                                Text(text = "${roundedMinTemperature.toInt()} ℃", color = Color.Yellow, fontSize = 10.sp)
+                            }
                         }
                         Graph(
                             modifier = Modifier.weight(1f),
@@ -325,25 +337,27 @@ object Dialog {
                             isHumidityEnabled = isHumidityEnabled,
                             isPressureEnabled = isPressureEnabled,
                             isSoilHumidityEnabled = isSoilHumidityEnabled,
-                            maxTemperature = maxTemperature,
-                            minTemperature = minTemperature,
-                            maxHumidity = maxHumidity,
-                            minHumidity = minHumidity,
-                            maxPressure = maxPressure,
-                            minPressure = minPressure,
-                            maxSoilHumidity = maxSoilHumidity,
-                            minSoilHumidity = minSoilHumidity,
+                            maxTemperature = roundedMaxTemperature,
+                            minTemperature = roundedMinTemperature,
+                            maxHumidity = roundedMaxHumidity,
+                            minHumidity = roundedMinHumidity,
+                            maxPressure = roundedMaxPressure,
+                            minPressure = roundedMinPressure,
+                            maxSoilHumidity = roundedMaxSoilHumidity,
+                            minSoilHumidity = roundedMinSoilHumidity,
                             onUpdateSelectedEnvironmentalLog = { selectedEnvironmentalLog = it },
                             onUpdateSelectedSoilHumidityLog = { selectedSoilHumidityLog = it }
                         )
-                        Column(modifier = Modifier.fillMaxHeight()) {
-                            Text(text = "${maxHumidity.toInt()} %", color = Color.Cyan, fontSize = 10.sp)
-                            Spacer(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .weight(1f)
-                            )
-                            Text(text = "${minHumidity.toInt()} %", color = Color.Cyan, fontSize = 10.sp)
+                        if (roundedMaxHumidity != null && roundedMinHumidity != null) {
+                            Column(modifier = Modifier.fillMaxHeight()) {
+                                Text(text = "${roundedMaxHumidity.toInt()} %", color = Color.Cyan, fontSize = 10.sp)
+                                Spacer(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .weight(1f)
+                                )
+                                Text(text = "${roundedMinHumidity.toInt()} %", color = Color.Cyan, fontSize = 10.sp)
+                            }
                         }
                     }
                     Row(modifier = Modifier.padding(start = 8.dp, top = 4.dp, end = 8.dp)) {
@@ -373,21 +387,61 @@ object Dialog {
                             Text(text = "🔼", fontSize = 10.sp)
                             Text(text = "🔽", fontSize = 10.sp)
                         }
-                        Column(modifier = Modifier.padding(end = 8.dp)) {
-                            Text(text = "${environmentalLogData.maxBy { it.temperature }.temperature} ℃", fontSize = 10.sp, color = Color.Yellow)
-                            Text(text = "${environmentalLogData.minBy { it.temperature }.temperature} ℃", fontSize = 10.sp, color = Color.Yellow)
+                        if (maxTemperature != null && minTemperature != null) {
+                            Column(modifier = Modifier.padding(end = 8.dp)) {
+                                Text(
+                                    text = "$maxTemperature ℃",
+                                    fontSize = 10.sp,
+                                    color = Color.Yellow
+                                )
+                                Text(
+                                    text = "$minTemperature ℃",
+                                    fontSize = 10.sp,
+                                    color = Color.Yellow
+                                )
+                            }
                         }
-                        Column(modifier = Modifier.padding(end = 8.dp)) {
-                            Text(text = "${environmentalLogData.maxBy { it.humidity }.humidity} %", fontSize = 10.sp, color = Color.Cyan)
-                            Text(text = "${environmentalLogData.minBy { it.humidity }.humidity} %", fontSize = 10.sp, color = Color.Cyan)
+                        if (maxHumidity != null && minHumidity != null) {
+                            Column(modifier = Modifier.padding(end = 8.dp)) {
+                                Text(
+                                    text = "$maxHumidity %",
+                                    fontSize = 10.sp,
+                                    color = Color.Cyan
+                                )
+                                Text(
+                                    text = "$minHumidity %",
+                                    fontSize = 10.sp,
+                                    color = Color.Cyan
+                                )
+                            }
                         }
-                        Column(modifier = Modifier.padding(end = 8.dp)) {
-                            Text(text = "${environmentalLogData.maxBy { it.pressure }.pressure} hPa", fontSize = 10.sp, color = Color.Green)
-                            Text(text = "${environmentalLogData.minBy { it.pressure }.pressure} hPa", fontSize = 10.sp, color = Color.Green)
+                        if (maxPressure != null && minPressure != null) {
+                            Column(modifier = Modifier.padding(end = 8.dp)) {
+                                Text(
+                                    text = "$maxPressure hPa",
+                                    fontSize = 10.sp,
+                                    color = Color.Green
+                                )
+                                Text(
+                                    text = "$minPressure hPa",
+                                    fontSize = 10.sp,
+                                    color = Color.Green
+                                )
+                            }
                         }
-                        Column {
-                            Text(text = "${soilHumidityLogData.maxBy { it.value }.value} %", fontSize = 10.sp, color = Color(0xffff8000))
-                            Text(text = "${soilHumidityLogData.minBy { it.value }.value} %", fontSize = 10.sp, color = Color(0xffff8000))
+                        if (maxSoilHumidity != null && minSoilHumidity != null) {
+                            Column {
+                                Text(
+                                    text = "$maxSoilHumidity %",
+                                    fontSize = 10.sp,
+                                    color = Color(0xffff8000)
+                                )
+                                Text(
+                                    text = "$minSoilHumidity %",
+                                    fontSize = 10.sp,
+                                    color = Color(0xffff8000)
+                                )
+                            }
                         }
                     }
                 }
