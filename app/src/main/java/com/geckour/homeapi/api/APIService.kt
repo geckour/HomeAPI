@@ -1,5 +1,6 @@
 package com.geckour.homeapi.api
 
+import com.geckour.homeapi.api.model.Co2Log
 import com.geckour.homeapi.api.model.Data
 import com.geckour.homeapi.api.model.EnvironmentalData
 import com.geckour.homeapi.api.model.EnvironmentalLog
@@ -42,6 +43,13 @@ interface APIService {
         @Query("end") end: Long,
         @Query("start") start: Long,
     ): Data<List<SoilHumidityLog>>
+
+    @GET("0/co2/log")
+    suspend fun getCo2Log(
+        @Query("id") id: String?,
+        @Query("end") end: Long,
+        @Query("start") start: Long,
+    ): Data<List<Co2Log>>
 
     @FormUrlEncoded
     @POST("0/air-cond")

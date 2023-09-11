@@ -65,10 +65,12 @@ class MainActivity : AppCompatActivity() {
                 }
                 val environmentalLogData = data.environmentalLogData
                 val soilHumidityLogData = data.soilHumidityLogData
-                if (environmentalLogData != null && soilHumidityLogData != null) {
+                val co2LogData = data.co2LogData
+                if (environmentalLogData != null && soilHumidityLogData != null && co2LogData != null) {
                     Dialog.EnvironmentalLog(
                         environmentalLogData = environmentalLogData,
                         soilHumidityLogData = soilHumidityLogData,
+                        co2LogData = co2LogData,
                         simpleDateFormat = get(),
                         onClearData = viewModel::clearEnvironmentalLogData,
                         onNewRange = {
@@ -114,6 +116,7 @@ class MainActivity : AppCompatActivity() {
                         0 -> {
                             Page.CeilingLight(items = viewModel.items, onHaptic = ::haptic)
                         }
+
                         1 -> {
                             Page.AirConductor(
                                 items = viewModel.items,
@@ -123,6 +126,7 @@ class MainActivity : AppCompatActivity() {
                                 currentTemperature = data.temperature
                             )
                         }
+
                         2 -> {
                             Page.Amp(items = viewModel.items, onHaptic = ::haptic)
                         }

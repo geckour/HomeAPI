@@ -13,6 +13,11 @@ internal object Colors {
     val TAR_BLACK = Color(0xE0000000)
     val WHITE = Color(0xFFFFFFFF)
     val PALE_WHITE = Color(0xE0FFFFFF)
+    val TEMPERATURE = Color.Yellow
+    val HUMIDITY = Color.Cyan
+    val PRESSURE = Color.Green
+    val SOIL_HUMIDITY = Color(0xffff8000)
+    val CO2 = Color.White
 }
 
 internal val DarkColors = darkColors(

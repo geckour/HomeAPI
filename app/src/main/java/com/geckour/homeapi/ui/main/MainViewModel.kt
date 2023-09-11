@@ -9,6 +9,7 @@ import com.geckour.homeapi.PREF_KEY_TEMPERATURE
 import com.geckour.homeapi.api.APIService
 import com.geckour.homeapi.api.AmpCommand
 import com.geckour.homeapi.api.CeilingLightCommand
+import com.geckour.homeapi.api.model.Co2Log
 import com.geckour.homeapi.api.model.EnvironmentalData
 import com.geckour.homeapi.api.model.EnvironmentalLog
 import com.geckour.homeapi.api.model.SoilHumidityLog
@@ -121,7 +122,13 @@ class MainViewModel(
             runCatching {
                 val environmentalLog = requestEnvironmentalLog(null, end, start)
                 val soilHumidityLog = requestSoilHumidityLog(null, end, start)
-                data.value = data.value.copy(isLoading = false, environmentalLogData = environmentalLog, soilHumidityLogData = soilHumidityLog)
+                val co2Log = requestCo2Log(null, end, start)
+                data.value = data.value.copy(
+                    isLoading = false,
+                    environmentalLogData = environmentalLog,
+                    soilHumidityLogData = soilHumidityLog,
+                    co2LogData = co2Log
+                )
             }.onFailure { onFailure(it) }
         }
     }
@@ -132,19 +139,27 @@ class MainViewModel(
 
     private suspend fun requestEnvironmentalLog(id: String?, end: Long, start: Long): List<EnvironmentalLog> =
         (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-                    .getEnvironmentalLog(
-                        id = id,
-                        end = end,
-                        start = start
-                    ).data
+            .getEnvironmentalLog(
+                id = id,
+                end = end,
+                start = start
+            ).data
 
     private suspend fun requestSoilHumidityLog(id: String?, end: Long, start: Long): List<SoilHumidityLog> =
-                (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-                    .getSoilHumidityLog(
-                        id = id,
-                        end = end,
-                        start = start
-                    ).data
+        (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
+            .getSoilHumidityLog(
+                id = id,
+                end = end,
+                start = start
+            ).data
+
+    private suspend fun requestCo2Log(id: String?, end: Long, start: Long): List<Co2Log> =
+        (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
+            .getCo2Log(
+                id = id,
+                end = end,
+                start = start
+            ).data
 
     internal fun sendSignal(signal: Boolean) {
         cancelPendingRequest()
@@ -217,6 +232,7 @@ class MainViewModel(
         val environmentalData: EnvironmentalData? = null,
         val environmentalLogData: List<EnvironmentalLog>? = null,
         val soilHumidityLogData: List<SoilHumidityLog>? = null,
+        val co2LogData: List<Co2Log>? = null,
         val temperature: Float = 20f,
         val isLoading: Boolean = false,
         val error: Throwable? = null,

@@ -33,6 +33,7 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.geckour.homeapi.api.model.Co2Log
 import com.geckour.homeapi.api.model.EnvironmentalLog
 import com.geckour.homeapi.api.model.SoilHumidityLog
 import com.geckour.homeapi.ui.Colors
@@ -47,10 +48,12 @@ fun Graph(
     end: Date,
     environmentalLogData: List<EnvironmentalLog>,
     soilHumidityLogData: List<SoilHumidityLog>,
+    co2LogData: List<Co2Log>,
     isTemperatureEnabled: Boolean,
     isHumidityEnabled: Boolean,
     isPressureEnabled: Boolean,
     isSoilHumidityEnabled: Boolean,
+    isCo2Enabled: Boolean,
     maxTemperature: Float?,
     minTemperature: Float?,
     maxHumidity: Float?,
@@ -59,8 +62,11 @@ fun Graph(
     minPressure: Float?,
     maxSoilHumidity: Float?,
     minSoilHumidity: Float?,
+    maxCo2: Float?,
+    minCo2: Float?,
     onUpdateSelectedEnvironmentalLog: (new: EnvironmentalLog?) -> Unit,
     onUpdateSelectedSoilHumidityLog: (new: SoilHumidityLog?) -> Unit,
+    onUpdateSelectedCo2Log: (new: Co2Log?) -> Unit,
 ) {
     Box(modifier = modifier) {
         val density = LocalDensity.current
@@ -77,14 +83,19 @@ fun Graph(
                             val pointedTime = (start.time + (end.time - start.time) * event.x / width).toLong()
                             val environmental = environmentalLogData.minByOrNull { abs(it.date.time - pointedTime) }
                             onUpdateSelectedEnvironmentalLog(environmental)
-                            val environmentalDiff = environmental?.let { abs(it.date.time - pointedTime) }
+                            val environmentalDiff = environmental?.let { EnvironmentalLog::class to abs(it.date.time - pointedTime) }
                             val soilHumidity = soilHumidityLogData.minByOrNull { abs(it.date.time - pointedTime) }
                             onUpdateSelectedSoilHumidityLog(soilHumidity)
-                            val soilHumidityDiff = soilHumidity?.let { abs(it.date.time - pointedTime) }
-                            targetDate = when {
-                                environmentalDiff == null -> soilHumidity?.date
-                                soilHumidityDiff == null -> environmental.date
-                                else -> if (environmentalDiff < soilHumidityDiff) environmental.date else soilHumidity.date
+                            val soilHumidityDiff = soilHumidity?.let { SoilHumidityLog::class to abs(it.date.time - pointedTime) }
+                            val co2 = co2LogData.minByOrNull { abs(it.date.time - pointedTime) }
+                            onUpdateSelectedCo2Log(co2)
+                            val co2Diff = co2?.let { Co2Log::class to abs(it.date.time - pointedTime) }
+                            targetDate = when (listOfNotNull(environmentalDiff, soilHumidityDiff, co2Diff).minByOrNull { it.second }?.first) {
+                                EnvironmentalLog::class -> environmental!!.date
+                                SoilHumidityLog::class -> soilHumidity!!.date
+                                Co2Log::class -> co2!!.date
+                                null -> null
+                                else -> throw IllegalStateException()
                             }
                             true
                         }
@@ -93,6 +104,7 @@ fun Graph(
                         MotionEvent.ACTION_POINTER_UP -> {
                             onUpdateSelectedEnvironmentalLog(null)
                             onUpdateSelectedSoilHumidityLog(null)
+                            onUpdateSelectedCo2Log(null)
                             targetDate = null
                             true
                         }
@@ -150,21 +162,21 @@ fun Graph(
                 if (isTemperatureEnabled) {
                     drawPath(
                         path = temperaturePath,
-                        color = Color.Yellow,
+                        color = Colors.TEMPERATURE,
                         style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
                     )
                 }
                 if (isHumidityEnabled) {
                     drawPath(
                         path = humidityPath,
-                        color = Color.Cyan,
+                        color = Colors.HUMIDITY,
                         style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
                     )
                 }
                 if (isPressureEnabled) {
                     drawPath(
                         path = pressurePath,
-                        color = Color.Green,
+                        color = Colors.PRESSURE,
                         style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
                     )
                 }
@@ -182,7 +194,25 @@ fun Graph(
                     }
                     drawPath(
                         path = soilHumidityPath,
-                        color = Color(0xffff8000),
+                        color = Colors.SOIL_HUMIDITY,
+                        style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    )
+                }
+
+                if (isCo2Enabled && maxCo2 != null && minCo2 != null) {
+                    val co2Path = Path()
+                    co2LogData.forEachIndexed { index, log ->
+                        val co2Plot =
+                            getPlot(size, graphPadding, log.value.toFloat(), maxCo2, minCo2, log.date, start, end)
+                        if (index == 0) {
+                            co2Path.moveTo(co2Plot.x, co2Plot.y)
+                        } else {
+                            co2Path.lineTo(co2Plot.x, co2Plot.y)
+                        }
+                    }
+                    drawPath(
+                        path = co2Path,
+                        color = Colors.CO2,
                         style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
                     )
                 }
@@ -212,6 +242,34 @@ fun Graph(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
+            if (maxHumidity != null && minHumidity != null) {
+                Column(
+                    modifier = Modifier.fillMaxHeight(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "${maxHumidity.toInt()} %",
+                        color = Colors.HUMIDITY,
+                        fontSize = 10.sp,
+                        modifier = Modifier
+                            .background(color = Colors.TEAL900)
+                            .padding(horizontal = 4.dp)
+                    )
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(1f)
+                    )
+                    Text(
+                        text = "${minHumidity.toInt()} %",
+                        color = Colors.HUMIDITY,
+                        fontSize = 10.sp,
+                        modifier = Modifier
+                            .background(color = Colors.TEAL900)
+                            .padding(horizontal = 4.dp)
+                    )
+                }
+            }
             if (maxPressure != null && minPressure != null) {
                 Column(
                     modifier = Modifier.fillMaxHeight(),
@@ -219,7 +277,7 @@ fun Graph(
                 ) {
                     Text(
                         text = "${maxPressure.toInt()} hPa",
-                        color = Color.Green,
+                        color = Colors.PRESSURE,
                         fontSize = 10.sp,
                         modifier = Modifier
                             .background(color = Colors.TEAL900)
@@ -232,7 +290,7 @@ fun Graph(
                     )
                     Text(
                         text = "${minPressure.toInt()} hPa",
-                        color = Color.Green,
+                        color = Colors.PRESSURE,
                         fontSize = 10.sp,
                         modifier = Modifier
                             .background(color = Colors.TEAL900)
@@ -247,7 +305,7 @@ fun Graph(
                 ) {
                     Text(
                         text = "${maxSoilHumidity.toInt()} %",
-                        color = Color(0xffff8000),
+                        color = Colors.SOIL_HUMIDITY,
                         fontSize = 10.sp,
                         modifier = Modifier
                             .background(color = Colors.TEAL900)
@@ -260,7 +318,7 @@ fun Graph(
                     )
                     Text(
                         text = "${minSoilHumidity.toInt()} %",
-                        color = Color(0xffff8000),
+                        color = Colors.SOIL_HUMIDITY,
                         fontSize = 10.sp,
                         modifier = Modifier
                             .background(color = Colors.TEAL900)
