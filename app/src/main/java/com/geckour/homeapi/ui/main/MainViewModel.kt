@@ -14,7 +14,6 @@ import com.geckour.homeapi.api.model.EnvironmentalData
 import com.geckour.homeapi.api.model.EnvironmentalLog
 import com.geckour.homeapi.api.model.SoilHumidityLog
 import com.geckour.homeapi.model.RequestData
-import com.geckour.homeapi.util.isInHome
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,8 +23,7 @@ import timber.log.Timber
 class MainViewModel(
     private val sharedPreferences: SharedPreferences,
     private val wifiManager: WifiManager,
-    private val apiServiceForWifi: APIService,
-    private val apiServiceForMobile: APIService
+    private val apiService: APIService
 ) : ViewModel() {
 
     internal val data = MutableStateFlow(MainData(temperature = sharedPreferences.getFloat(PREF_KEY_TEMPERATURE, 20f)))
@@ -91,11 +89,10 @@ class MainViewModel(
         pendingRequest = viewModelScope.launch {
             data.value = data.value.copy(isLoading = true, error = null)
             runCatching {
-                (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-                    .ceilingLight(
-                        roomId = data.value.room.id,
-                        command = command.rawValue
-                    )
+                apiService.ceilingLight(
+                    roomId = data.value.room.id,
+                    command = command.rawValue
+                )
             }
                 .onSuccess { data.value = data.value.copy(isLoading = false) }
                 .onFailure { onFailure(it) }
@@ -107,8 +104,7 @@ class MainViewModel(
         pendingRequest = viewModelScope.launch {
             data.value = data.value.copy(isLoading = true, error = null)
             runCatching {
-                (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-                    .getEnvironmentalData()
+                apiService.getEnvironmentalData()
             }
                 .onFailure { onFailure(it) }
                 .onSuccess { data.value = data.value.copy(isLoading = false, environmentalData = it.data) }
@@ -138,35 +134,31 @@ class MainViewModel(
     }
 
     private suspend fun requestEnvironmentalLog(id: String?, end: Long, start: Long): List<EnvironmentalLog> =
-        (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-            .getEnvironmentalLog(
-                id = id,
-                end = end,
-                start = start
-            ).data
+        apiService.getEnvironmentalLog(
+            id = id,
+            end = end,
+            start = start
+        ).data
 
     private suspend fun requestSoilHumidityLog(id: String?, end: Long, start: Long): List<SoilHumidityLog> =
-        (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-            .getSoilHumidityLog(
-                id = id,
-                end = end,
-                start = start
-            ).data
+        apiService.getSoilHumidityLog(
+            id = id,
+            end = end,
+            start = start
+        ).data
 
     private suspend fun requestCo2Log(id: String?, end: Long, start: Long): List<Co2Log> =
-        (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-            .getCo2Log(
-                id = id,
-                end = end,
-                start = start
-            ).data
+        apiService.getCo2Log(
+            id = id,
+            end = end,
+            start = start
+        ).data
 
     internal fun sendSignal(signal: Boolean) {
         cancelPendingRequest()
         pendingRequest = viewModelScope.launch {
             runCatching {
-                (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-                    .signalLight(command = if (signal) 1 else 0)
+                apiService.signalLight(command = if (signal) 1 else 0)
             }.onFailure { onFailure(it) }
         }
     }
@@ -201,13 +193,12 @@ class MainViewModel(
         pendingRequest = viewModelScope.launch {
             data.value = data.value.copy(isLoading = true, error = null)
             runCatching {
-                (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-                    .airCond(
-                        runMode = runMode,
-                        temperature = sharedPreferences.getFloat(
-                            PREF_KEY_TEMPERATURE, 20f
-                        )
+                apiService.airCond(
+                    runMode = runMode,
+                    temperature = sharedPreferences.getFloat(
+                        PREF_KEY_TEMPERATURE, 20f
                     )
+                )
             }
                 .onSuccess { data.value = data.value.copy(isLoading = false) }
                 .onFailure { onFailure(it) }
@@ -219,8 +210,7 @@ class MainViewModel(
         pendingRequest = viewModelScope.launch {
             data.value = data.value.copy(isLoading = true, error = null)
             runCatching {
-                (if (wifiManager.isInHome()) apiServiceForWifi else apiServiceForMobile)
-                    .amp(command = command.rawValue)
+                apiService.amp(command = command.rawValue)
             }
                 .onSuccess { data.value = data.value.copy(isLoading = false) }
                 .onFailure { onFailure(it) }

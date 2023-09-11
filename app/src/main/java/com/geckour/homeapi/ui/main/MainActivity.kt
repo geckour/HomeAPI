@@ -1,9 +1,12 @@
 package com.geckour.homeapi.ui.main
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -28,14 +31,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.geckour.homeapi.receiver.SleepReceiver
+import com.geckour.homeapi.receiver.requestSleepData
 import com.geckour.homeapi.ui.Colors
 import com.geckour.homeapi.ui.DarkColors
 import com.geckour.homeapi.ui.LightColors
 import com.geckour.homeapi.ui.login.LoginActivity
+import com.google.android.gms.location.ActivityRecognition
+import com.google.android.gms.location.SleepSegmentRequest
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import retrofit2.HttpException
+import timber.log.Timber
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -47,8 +56,16 @@ class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModel()
 
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        Timber.d("Permission is ${if (isGranted.not()) "not" else ""} granted")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        requestSleepData(this) {
+            requestPermissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
+        }
 
         setContent {
             MaterialTheme(colors = if (isSystemInDarkTheme()) DarkColors else LightColors) {

@@ -1,7 +1,6 @@
 package com.geckour.homeapi.ui.login
 
 import android.content.SharedPreferences
-import android.net.wifi.WifiManager
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,7 +9,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.geckour.homeapi.PREF_KEY_TOKEN
 import com.geckour.homeapi.api.AuthService
-import com.geckour.homeapi.util.isInHome
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -20,9 +18,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class LoginViewModel(
     private val json: Json,
     private val sharedPreferences: SharedPreferences,
-    private val wifiManager: WifiManager,
-    private val authServiceForWiFi: AuthService,
-    private val authServiceForMobile: AuthService
+    private val authService: AuthService,
 ) : ViewModel() {
 
     internal var data: LoginData by mutableStateOf(LoginData(success = false, isLoading = false, error = null))
@@ -43,7 +39,7 @@ class LoginViewModel(
         viewModelScope.launch {
             data = data.copy(isLoading = true, error = null)
             runCatching {
-                (if (wifiManager.isInHome()) authServiceForWiFi else authServiceForMobile).getAccessToken(
+                authService.getAccessToken(
                     username = username,
                     password = password
                 )

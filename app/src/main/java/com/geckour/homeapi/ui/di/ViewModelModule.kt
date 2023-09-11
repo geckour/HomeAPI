@@ -11,7 +11,6 @@ import com.geckour.homeapi.api.AuthService
 import com.geckour.homeapi.model.OAuthToken
 import com.geckour.homeapi.ui.login.LoginViewModel
 import com.geckour.homeapi.ui.main.MainViewModel
-import com.geckour.homeapi.util.isInHome
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
@@ -21,17 +20,11 @@ import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
-import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.create
 import java.text.SimpleDateFormat
 import java.util.*
-
-private const val AUTH_SERVICE_WIFI = "auth_service_wifi"
-private const val AUTH_SERVICE_MOBILE = "auth_service_mobile"
-private const val API_SERVICE_WIFI = "api_service_wifi"
-private const val API_SERVICE_MOBILE = "api_service_mobile"
 
 @OptIn(ExperimentalSerializationApi::class)
 val viewModelModule = module {
@@ -71,8 +64,7 @@ val viewModelModule = module {
                     }
 
                     refreshToken?.let {
-                        val name = if (get<WifiManager>().isInHome()) AUTH_SERVICE_WIFI else AUTH_SERVICE_MOBILE
-                        get<AuthService>(named(name)).refreshAccessToken(refreshToken = it).execute().body()?.let { token ->
+                        get<AuthService>().refreshAccessToken(refreshToken = it).execute().body()?.let { token ->
                             sharedPreferences.edit { putString(PREF_KEY_TOKEN, json.encodeToString(token)) }
                             response.close()
                             return@addInterceptor chain.proceed(
@@ -91,26 +83,7 @@ val viewModelModule = module {
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    single(named(API_SERVICE_WIFI)) {
-        Retrofit.Builder()
-            .client(get())
-            .baseUrl("https://192.168.10.101:3000")
-            .addConverterFactory(Json.asConverterFactory(MediaType.get("application/json")))
-            .build()
-            .create<APIService>()
-    }
-
-    single(named(AUTH_SERVICE_WIFI)) {
-        Retrofit.Builder()
-            .client(OkHttpClient.Builder().build())
-            .baseUrl("https://192.168.10.101:3000")
-            .addConverterFactory(Json.asConverterFactory(MediaType.get("application/json")))
-            .build()
-            .create<AuthService>()
-    }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    single(named(API_SERVICE_MOBILE)) {
+    single {
         Retrofit.Builder()
             .client(get())
             .baseUrl("https://api.geckour.com:5775")
@@ -119,7 +92,7 @@ val viewModelModule = module {
             .create<APIService>()
     }
 
-    single(named(AUTH_SERVICE_MOBILE)) {
+    single {
         Retrofit.Builder()
             .client(OkHttpClient.Builder().build())
             .baseUrl("https://api.geckour.com:5775")
@@ -132,7 +105,7 @@ val viewModelModule = module {
         androidContext().getSystemService<WifiManager>()
     }
 
-    viewModel { LoginViewModel(get(), get(), get(), get(named(AUTH_SERVICE_WIFI)), get(named(AUTH_SERVICE_MOBILE))) }
+    viewModel { LoginViewModel(get(), get(), get()) }
 
-    viewModel { MainViewModel(get(), get(), get(named(API_SERVICE_WIFI)), get(named(API_SERVICE_MOBILE))) }
+    viewModel { MainViewModel(get(), get(), get()) }
 }
