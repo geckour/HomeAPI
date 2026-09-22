@@ -2,6 +2,7 @@ package com.geckour.homeapi.ui.main
 
 import android.content.SharedPreferences
 import android.net.wifi.WifiManager
+import android.os.Build
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,6 +15,7 @@ import com.geckour.homeapi.api.model.EnvironmentalData
 import com.geckour.homeapi.api.model.EnvironmentalLog
 import com.geckour.homeapi.api.model.SoilHumidityLog
 import com.geckour.homeapi.model.RequestData
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,6 +73,24 @@ class MainViewModel(
     )
 
     private var pendingRequest: Job? = null
+
+    init {
+        registerDevice()
+    }
+
+    private fun registerDevice() {
+        FirebaseMessaging.getInstance().token
+            .addOnSuccessListener { token ->
+                viewModelScope.launch {
+                    runCatching {
+                        apiService.registerDevice(token = token, name = Build.MODEL)
+                    }.onFailure { Timber.e(it) }
+                }
+            }
+            .addOnFailureListener { e ->
+                Timber.e(e)
+            }
+    }
 
     private fun cancelPendingRequest() {
         pendingRequest?.cancel()

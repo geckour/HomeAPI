@@ -3,6 +3,8 @@ package com.geckour.homeapi.ui.main
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -36,7 +38,7 @@ import com.geckour.homeapi.ui.Colors
 import com.geckour.homeapi.ui.DarkColors
 import com.geckour.homeapi.ui.LightColors
 import com.geckour.homeapi.ui.login.LoginActivity
-import com.geckour.homeapi.util.getRequestPermissionLauncher
+import com.geckour.homeapi.util.getRequestPermissionsLauncher
 import org.koin.android.ext.android.get
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import retrofit2.HttpException
@@ -53,8 +55,17 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        requestSleepData(this) {
-            getRequestPermissionLauncher().launch(Manifest.permission.ACTIVITY_RECOGNITION)
+        val permissions = buildList {
+            requestSleepData(this@MainActivity) { add(Manifest.permission.ACTIVITY_RECOGNITION) }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+        // Requests them at once since the system rejects a request made while another one is in progress
+        if (permissions.isNotEmpty()) {
+            getRequestPermissionsLauncher().launch(permissions.toTypedArray())
         }
 
         setContent {

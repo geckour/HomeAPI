@@ -66,6 +66,13 @@ interface APIService {
     suspend fun amp(
         @Field("command") command: String
     )
+
+    @FormUrlEncoded
+    @POST("0/devices")
+    suspend fun registerDevice(
+        @Field("token") token: String,
+        @Field("name") name: String,
+    )
 }
 
 enum class CeilingLightCommand(val rawValue: String) {

@@ -65,6 +65,9 @@ dependencies {
     implementation 'com.google.firebase:firebase-crashlytics'
     implementation 'com.google.firebase:firebase-analytics'
 
+    // Messaging
+    implementation 'com.google.firebase:firebase-messaging'
+
     // KTX
     implementation 'androidx.core:core-ktx:1.19.0'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0'
