@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
+import androidx.compose.material.ripple
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -38,7 +39,7 @@ object Item {
                         item.onClick?.invoke()
                         onHaptic()
                     },
-                    indication = rememberRipple(color = Color(0xc0ffffff)),
+                    indication = ripple(color = Color(0xc0ffffff)),
                     interactionSource = interactionSource
                 )
         ) {
@@ -71,7 +72,7 @@ object Item {
                                 item.onClick?.invoke()
                                 onHaptic()
                             },
-                            indication = rememberRipple(color = Color(0xc0ffffff)),
+                            indication = ripple(color = Color(0xc0ffffff)),
                             interactionSource = interactionSource
                         ),
                 ) {

@@ -240,8 +240,33 @@ fun Graph(
         )
         Row(
             modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            if (maxTemperature != null && minTemperature != null) {
+                Column(modifier = Modifier.fillMaxHeight()) {
+                    Text(
+                        text = "${maxTemperature.toInt()} ℃",
+                        color = Colors.TEMPERATURE,
+                        fontSize = 10.sp,
+                        modifier = Modifier
+                            .background(color = Colors.TEAL900)
+                            .padding(horizontal = 4.dp)
+                    )
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(1f)
+                    )
+                    Text(
+                        text = "${minTemperature.toInt()} ℃",
+                        color = Colors.TEMPERATURE,
+                        fontSize = 10.sp,
+                        modifier = Modifier
+                            .background(color = Colors.TEAL900)
+                            .padding(horizontal = 4.dp)
+                    )
+                }
+            }
             if (maxHumidity != null && minHumidity != null) {
                 Column(
                     modifier = Modifier.fillMaxHeight(),
@@ -319,6 +344,31 @@ fun Graph(
                     Text(
                         text = "${minSoilHumidity.toInt()} %",
                         color = Colors.SOIL_HUMIDITY,
+                        fontSize = 10.sp,
+                        modifier = Modifier
+                            .background(color = Colors.TEAL900)
+                            .padding(horizontal = 4.dp)
+                    )
+                }
+            }
+            if (maxCo2 != null && minCo2 != null) {
+                Column(modifier = Modifier.fillMaxHeight()) {
+                    Text(
+                        text = "${maxCo2.toInt()} ppm",
+                        color = Colors.CO2,
+                        fontSize = 10.sp,
+                        modifier = Modifier
+                            .background(color = Colors.TEAL900)
+                            .padding(horizontal = 4.dp)
+                    )
+                    Spacer(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(1f)
+                    )
+                    Text(
+                        text = "${minCo2.toInt()} ppm",
+                        color = Colors.CO2,
                         fontSize = 10.sp,
                         modifier = Modifier
                             .background(color = Colors.TEAL900)

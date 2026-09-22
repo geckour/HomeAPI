@@ -22,7 +22,6 @@ import timber.log.Timber
 
 class MainViewModel(
     private val sharedPreferences: SharedPreferences,
-    private val wifiManager: WifiManager,
     private val apiService: APIService
 ) : ViewModel() {
 
@@ -165,6 +164,14 @@ class MainViewModel(
 
     internal fun clearEnvironmentalData() {
         data.value = data.value.copy(environmentalData = null)
+    }
+
+    internal fun normalizeEnvironmentalLogData() {
+        pendingRequest = viewModelScope.launch {
+            runCatching {
+                apiService.normalizeEnvironmentalLog()
+            }.onFailure { onFailure(it) }
+        }
     }
 
     internal fun clearEnvironmentalLogData() {

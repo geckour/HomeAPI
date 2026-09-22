@@ -3,18 +3,18 @@ package com.geckour.homeapi.ui.main
 import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement.Bottom
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.CircularProgressIndicator
@@ -23,29 +23,23 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.geckour.homeapi.receiver.SleepReceiver
 import com.geckour.homeapi.receiver.requestSleepData
 import com.geckour.homeapi.ui.Colors
 import com.geckour.homeapi.ui.DarkColors
 import com.geckour.homeapi.ui.LightColors
 import com.geckour.homeapi.ui.login.LoginActivity
-import com.google.android.gms.location.ActivityRecognition
-import com.google.android.gms.location.SleepSegmentRequest
-import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.launch
+import com.geckour.homeapi.util.getRequestPermissionLauncher
 import org.koin.android.ext.android.get
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import retrofit2.HttpException
-import timber.log.Timber
-import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -56,15 +50,11 @@ class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModel()
 
-    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        Timber.d("Permission is ${if (isGranted.not()) "not" else ""} granted")
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         requestSleepData(this) {
-            requestPermissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
+            getRequestPermissionLauncher().launch(Manifest.permission.ACTIVITY_RECOGNITION)
         }
 
         setContent {
@@ -73,7 +63,11 @@ class MainActivity : AppCompatActivity() {
                 val scaffoldState = rememberScaffoldState()
                 var currentRange by remember { mutableStateOf(Dialog.Range.DAY) }
 
-                Content(scaffoldState = scaffoldState, data = data, currentRange)
+                Content(
+                    scaffoldState = scaffoldState,
+                    data = data,
+                    currentRange = currentRange,
+                )
                 Loading(data = data)
                 Error(data = data, scaffoldState = scaffoldState)
 
@@ -89,6 +83,7 @@ class MainActivity : AppCompatActivity() {
                         soilHumidityLogData = soilHumidityLogData,
                         co2LogData = co2LogData,
                         simpleDateFormat = get(),
+                        onNormalize = viewModel::normalizeEnvironmentalLogData,
                         onClearData = viewModel::clearEnvironmentalLogData,
                         onNewRange = {
                             currentRange = it
@@ -104,11 +99,19 @@ class MainActivity : AppCompatActivity() {
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
-    fun Content(scaffoldState: ScaffoldState, data: MainViewModel.MainData, currentRange: Dialog.Range) {
-        Column(verticalArrangement = Bottom, modifier = Modifier.fillMaxSize()) {
-            val pagerState = rememberPagerState()
-
+    fun Content(
+        scaffoldState: ScaffoldState,
+        data: MainViewModel.MainData,
+        currentRange: Dialog.Range,
+    ) {
+        val pagerState = rememberPagerState(pageCount = { 3 })
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = MaterialTheme.colors.background),
+        ) {
             Scaffold(
+                modifier = Modifier.padding(WindowInsets.systemBars.asPaddingValues()),
                 scaffoldState = scaffoldState,
                 topBar = {
                     Bar.TopBar(
@@ -126,9 +129,12 @@ class MainActivity : AppCompatActivity() {
                         onHaptic = ::haptic,
                         currentRange = currentRange
                     )
-                }
+                },
             ) { innerPadding ->
-                HorizontalPager(pageCount = 3, state = pagerState, contentPadding = innerPadding) { page ->
+                HorizontalPager(
+                    state = pagerState,
+                    contentPadding = innerPadding,
+                ) { page ->
                     when (page) {
                         0 -> {
                             Page.CeilingLight(items = viewModel.items, onHaptic = ::haptic)
@@ -172,7 +178,8 @@ class MainActivity : AppCompatActivity() {
             if ((it as? HttpException)?.code() in 400..401) {
                 startActivity(LoginActivity.newIntent(this))
             }
-            rememberCoroutineScope().launch {
+
+            LaunchedEffect(Unit) {
                 scaffoldState.snackbarHostState.showSnackbar(it.message.orEmpty(), actionLabel = "OK")
             }
         }

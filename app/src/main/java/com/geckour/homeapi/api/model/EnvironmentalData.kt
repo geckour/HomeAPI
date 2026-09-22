@@ -7,5 +7,4 @@ data class EnvironmentalData(
     val temperature: Float,
     val humidity: Float,
     val pressure: Float,
-    val illuminance: Float
 )

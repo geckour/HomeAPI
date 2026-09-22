@@ -68,7 +68,9 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            MaterialTheme(colors = if (isSystemInDarkTheme()) DarkColors else LightColors) {
+            MaterialTheme(
+                colors = if (isSystemInDarkTheme()) DarkColors else LightColors,
+            ) {
                 Content()
                 Loading()
                 Error()

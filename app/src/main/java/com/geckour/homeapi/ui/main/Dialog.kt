@@ -21,6 +21,7 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.ripple
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -74,11 +75,10 @@ object Dialog {
             text = {
                 Text(
                     text = String.format(
-                        "🌡 %.2f [℃]\n💧 %.2f [%%]\n🌪 %.2f [hPa]\n💡 %.2f [lux]",
+                        "🌡 %.2f [℃]\n💧 %.2f [%%]\n🌪 %.2f [hPa]",
                         environmentalData.temperature,
                         environmentalData.humidity,
                         environmentalData.pressure,
-                        environmentalData.illuminance
                     ),
                     color = MaterialTheme.colors.onBackground,
                     fontSize = 18.sp,
@@ -95,6 +95,7 @@ object Dialog {
         soilHumidityLogData: List<SoilHumidityLog>,
         co2LogData: List<Co2Log>,
         simpleDateFormat: SimpleDateFormat,
+        onNormalize: () -> Unit,
         onClearData: () -> Unit,
         onNewRange: (range: Range) -> Unit,
         onHaptic: () -> Unit,
@@ -103,6 +104,18 @@ object Dialog {
         val dates = (environmentalLogData.map { it.date } + soilHumidityLogData.map { it.date } + co2LogData.map { it.date })
         AlertDialog(
             onDismissRequest = { onClearData() },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        onNormalize()
+                        onHaptic()
+                    },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = MaterialTheme.colors.onBackground),
+                    elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp)
+                ) {
+                    Text(text = "正規化")
+                }
+            },
             confirmButton = {
                 Button(
                     onClick = {
@@ -219,7 +232,7 @@ object Dialog {
                                 .size(24.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
-                                    indication = rememberRipple(bounded = false)
+                                    indication = ripple(bounded = false)
                                 ) {
                                     isTemperatureEnabled = isTemperatureEnabled.not()
                                 }
@@ -234,7 +247,7 @@ object Dialog {
                                 .size(24.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
-                                    indication = rememberRipple(bounded = false)
+                                    indication = ripple(bounded = false)
                                 ) {
                                     isHumidityEnabled = isHumidityEnabled.not()
                                 }
@@ -249,7 +262,7 @@ object Dialog {
                                 .size(24.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
-                                    indication = rememberRipple(bounded = false)
+                                    indication = ripple(bounded = false)
                                 ) {
                                     isPressureEnabled = isPressureEnabled.not()
                                 }
@@ -264,7 +277,7 @@ object Dialog {
                                 .size(24.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
-                                    indication = rememberRipple(bounded = false)
+                                    indication = ripple(bounded = false)
                                 ) {
                                     isSoilHumidityEnabled = isSoilHumidityEnabled.not()
                                 }
@@ -278,7 +291,7 @@ object Dialog {
                                 .size(24.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
-                                    indication = rememberRipple(bounded = false)
+                                    indication = ripple(bounded = false)
                                 ) {
                                     isCo2Enabled = isCo2Enabled.not()
                                 }
@@ -354,17 +367,6 @@ object Dialog {
                     }
 
                     Row(modifier = Modifier.height(160.dp)) {
-                        if (roundedMaxTemperature != null && roundedMinTemperature != null) {
-                            Column(modifier = Modifier.fillMaxHeight()) {
-                                Text(text = "${roundedMaxTemperature.toInt()} ℃", color = Colors.TEMPERATURE, fontSize = 10.sp)
-                                Spacer(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .weight(1f)
-                                )
-                                Text(text = "${roundedMinTemperature.toInt()} ℃", color = Colors.TEMPERATURE, fontSize = 10.sp)
-                            }
-                        }
                         Graph(
                             modifier = Modifier.weight(1f),
                             start = start,
@@ -391,17 +393,6 @@ object Dialog {
                             onUpdateSelectedSoilHumidityLog = { selectedSoilHumidityLog = it },
                             onUpdateSelectedCo2Log = { selectedCo2Log = it }
                         )
-                        if (roundedMaxCo2 != null && roundedMinCo2 != null) {
-                            Column(modifier = Modifier.fillMaxHeight()) {
-                                Text(text = "${roundedMaxCo2.toInt()} ppm", color = Colors.CO2, fontSize = 10.sp)
-                                Spacer(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .weight(1f)
-                                )
-                                Text(text = "${roundedMinCo2.toInt()} ppm", color = Colors.CO2, fontSize = 10.sp)
-                            }
-                        }
                     }
                     Row(modifier = Modifier.padding(start = 8.dp, top = 4.dp, end = 8.dp)) {
                         val startText = simpleDateFormat.format(start).split(' ')

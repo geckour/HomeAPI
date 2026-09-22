@@ -117,7 +117,7 @@ object Bar {
                 DialogButton.LogDialogButton(onRequestData = onRequestLogData, onHaptic = onHaptic, currentRange = currentRange)
             }
             BottomNavigation {
-                Page.Screen.values().forEachIndexed { index, screen ->
+                Page.Screen.entries.forEachIndexed { index, screen ->
                     val selected = index == pagerState.currentPage
                     BottomNavigationItem(
                         modifier = Modifier.background(color = MaterialTheme.colors.background),

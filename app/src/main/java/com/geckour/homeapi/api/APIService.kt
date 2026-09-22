@@ -37,6 +37,9 @@ interface APIService {
         @Query("start") start: Long,
     ): Data<List<EnvironmentalLog>>
 
+    @POST("0/environmental/log/normalize")
+    suspend fun normalizeEnvironmentalLog()
+
     @GET("0/soil-humidity/log")
     suspend fun getSoilHumidityLog(
         @Query("id") id: String?,

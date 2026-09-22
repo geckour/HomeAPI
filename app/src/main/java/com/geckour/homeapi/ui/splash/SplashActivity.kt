@@ -21,14 +21,21 @@ class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val token = get<SharedPreferences>().getString(PREF_KEY_TOKEN, null)?.let { get<Json>().decodeFromString<OAuthToken>(it) }
+        startNextActivity()
+    }
+
+    private fun startNextActivity() {
+        val token = get<SharedPreferences>().getString(PREF_KEY_TOKEN, null)
+            ?.let { get<Json>().decodeFromString<OAuthToken>(it) }
+
         val intent =
-            if (token == null || SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sssXXX", Locale.JAPAN).parse(token.accessTokenExpiresAt).before(Date())) {
+            if (token == null || SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sssXXX", Locale.JAPAN).parse(token.refreshTokenExpiresAt).before(Date())) {
                 LoginActivity.newIntent(this)
             } else {
                 MainActivity.newIntent(this)
             }
 
         startActivity(intent)
+        finish()
     }
 }
