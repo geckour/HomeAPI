@@ -15,14 +15,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.ripple
-import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,13 +53,12 @@ object Dialog {
         AlertDialog(
             onDismissRequest = { onClearData() },
             confirmButton = {
-                Button(
+                TextButton(
                     onClick = {
                         onClearData()
                         onHaptic()
                     },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = MaterialTheme.colors.onBackground),
-                    elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp)
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground)
                 ) {
                     Text(text = "OK")
                 }
@@ -67,7 +67,7 @@ object Dialog {
                 Text(
                     text = "📡 環境値",
                     fontSize = 24.sp,
-                    color = MaterialTheme.colors.onBackground,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
@@ -80,12 +80,12 @@ object Dialog {
                         environmentalData.humidity,
                         environmentalData.pressure,
                     ),
-                    color = MaterialTheme.colors.onBackground,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 18.sp,
                     lineHeight = 30.sp
                 )
             },
-            backgroundColor = Colors.TEAL900
+            containerColor = Colors.TEAL900
         )
     }
 
@@ -105,25 +105,23 @@ object Dialog {
         AlertDialog(
             onDismissRequest = { onClearData() },
             dismissButton = {
-                Button(
+                TextButton(
                     onClick = {
                         onNormalize()
                         onHaptic()
                     },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = MaterialTheme.colors.onBackground),
-                    elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp)
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground)
                 ) {
                     Text(text = "正規化")
                 }
             },
             confirmButton = {
-                Button(
+                TextButton(
                     onClick = {
                         onClearData()
                         onHaptic()
                     },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = MaterialTheme.colors.onBackground),
-                    elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp)
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground)
                 ) {
                     Text(text = "OK")
                 }
@@ -167,7 +165,7 @@ object Dialog {
                     Text(
                         text = "📈 グラフ",
                         fontSize = 24.sp,
-                        color = MaterialTheme.colors.onBackground,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Start
@@ -186,7 +184,8 @@ object Dialog {
                                 onHaptic()
                             },
                             colors = ButtonDefaults.buttonColors(
-                                backgroundColor = if (currentRange == Range.MONTH) Colors.TEAL200 else Colors.TAR_BLACK
+                                containerColor = if (currentRange == Range.MONTH) Colors.TEAL200 else Colors.TAR_BLACK,
+                                contentColor = if (currentRange == Range.MONTH) MaterialTheme.colorScheme.onPrimary else Colors.PALE_WHITE
                             )
                         ) {
                             Text(text = "1M")
@@ -198,7 +197,8 @@ object Dialog {
                                 onHaptic()
                             },
                             colors = ButtonDefaults.buttonColors(
-                                backgroundColor = if (currentRange == Range.WEEK) Colors.TEAL200 else Colors.TAR_BLACK
+                                containerColor = if (currentRange == Range.WEEK) Colors.TEAL200 else Colors.TAR_BLACK,
+                                contentColor = if (currentRange == Range.WEEK) MaterialTheme.colorScheme.onPrimary else Colors.PALE_WHITE
                             )
                         ) {
                             Text(text = "1w")
@@ -209,7 +209,8 @@ object Dialog {
                                 onHaptic()
                             },
                             colors = ButtonDefaults.buttonColors(
-                                backgroundColor = if (currentRange == Range.DAY) Colors.TEAL200 else Colors.TAR_BLACK
+                                containerColor = if (currentRange == Range.DAY) Colors.TEAL200 else Colors.TAR_BLACK,
+                                contentColor = if (currentRange == Range.DAY) MaterialTheme.colorScheme.onPrimary else Colors.PALE_WHITE
                             )
                         ) {
                             Text(text = "1d")
@@ -306,7 +307,8 @@ object Dialog {
                         Card(
                             modifier = Modifier
                                 .padding(bottom = 4.dp)
-                                .alpha(if (selectedEnvironmentalLog == null) 0f else 1f)
+                                .alpha(if (selectedEnvironmentalLog == null) 0f else 1f),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         ) {
                             Column(modifier = Modifier.padding(4.dp)) {
                                 val dateString = selectedEnvironmentalLog?.date?.let { simpleDateFormat.format(it) }.orEmpty()
@@ -330,7 +332,10 @@ object Dialog {
                             modifier = Modifier
                                 .padding(bottom = 4.dp)
                         ) {
-                            Card(Modifier.alpha(if (selectedSoilHumidityLog == null) 0f else 1f)) {
+                            Card(
+                                modifier = Modifier.alpha(if (selectedSoilHumidityLog == null) 0f else 1f),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                            ) {
                                 Column(modifier = Modifier.padding(4.dp)) {
                                     val dateString = selectedSoilHumidityLog?.date?.let { simpleDateFormat.format(it) }.orEmpty()
                                     Text(
@@ -347,7 +352,10 @@ object Dialog {
                                 }
                             }
                             Spacer(modifier = Modifier.height(4.dp))
-                            Card(Modifier.alpha(if (selectedCo2Log == null) 0f else 1f)) {
+                            Card(
+                                modifier = Modifier.alpha(if (selectedCo2Log == null) 0f else 1f),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                            ) {
                                 Column(modifier = Modifier.padding(4.dp)) {
                                     val dateString = selectedCo2Log?.date?.let { simpleDateFormat.format(it) }.orEmpty()
                                     Text(
@@ -494,7 +502,7 @@ object Dialog {
                     }
                 }
             },
-            backgroundColor = Colors.TEAL900
+            containerColor = Colors.TEAL900
         )
     }
 

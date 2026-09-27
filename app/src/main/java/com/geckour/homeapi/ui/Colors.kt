@@ -1,7 +1,10 @@
 package com.geckour.homeapi.ui
 
-import androidx.compose.material.darkColors
-import androidx.compose.material.lightColors
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 internal object Colors {
@@ -20,28 +23,31 @@ internal object Colors {
     val CO2 = Color.White
 }
 
-internal val DarkColors = darkColors(
+internal val DarkColorScheme = darkColorScheme(
     primary = Colors.TEAL200,
-    primaryVariant = Colors.TEAL700,
-    secondary = Colors.TEAL200,
-    secondaryVariant = Colors.TEAL700,
-    background = Colors.BLACK,
-    surface = Colors.TAR_BLACK,
     onPrimary = Colors.BLACK,
+    secondary = Colors.TEAL200,
     onSecondary = Colors.BLACK,
+    background = Colors.BLACK,
     onBackground = Colors.PALE_WHITE,
-    onSurface = Colors.PALE_WHITE
+    surface = Colors.TAR_BLACK,
+    onSurface = Colors.PALE_WHITE,
+    inversePrimary = Colors.TEAL700
 )
 
-internal val LightColors = lightColors(
+internal val LightColorScheme = lightColorScheme(
     primary = Colors.TEAL200,
-    primaryVariant = Colors.TEAL700,
-    secondary = Colors.TEAL200,
-    secondaryVariant = Colors.TEAL700,
-    background = Colors.WHITE,
-    surface = Colors.PALE_WHITE,
     onPrimary = Colors.WHITE,
+    secondary = Colors.TEAL200,
     onSecondary = Colors.WHITE,
+    background = Colors.WHITE,
     onBackground = Colors.TAR_BLACK,
-    onSurface = Colors.TAR_BLACK
+    surface = Colors.PALE_WHITE,
+    onSurface = Colors.TAR_BLACK,
+    inversePrimary = Colors.TEAL200
 )
+
+@Composable
+internal fun AppTheme(content: @Composable () -> Unit) {
+    MaterialTheme(colorScheme = if (isSystemInDarkTheme()) DarkColorScheme else LightColorScheme, content = content)
+}

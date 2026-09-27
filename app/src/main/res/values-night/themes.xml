@@ -1,10 +1,8 @@
 <resources>
     <!-- Base application theme. -->
-    <style name="Theme.HomeAPI" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimaryVariant">#000000</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <item name="android:windowLightStatusBar">false</item>
+    <style name="Theme.HomeAPI" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Matches the background of Compose so that Material 3's baseline color doesn't show up -->
+        <item name="android:windowBackground">@android:color/black</item>
         <!-- Customize your theme here. -->
         <item name="colorControlHighlight">#ffffff</item>
     </style>

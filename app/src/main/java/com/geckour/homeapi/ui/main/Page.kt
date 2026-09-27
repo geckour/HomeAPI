@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.Divider
-import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,7 +45,7 @@ object Page {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(color = MaterialTheme.colors.background), reverseLayout = true
+                    .background(color = MaterialTheme.colorScheme.background), reverseLayout = true
             ) {
                 itemsIndexed(it) { i, item -> Item.ListItem(item = item, first = i == 0, onHaptic = onHaptic) }
             }
@@ -64,7 +64,7 @@ object Page {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(color = MaterialTheme.colors.background), reverseLayout = true
+                    .background(color = MaterialTheme.colorScheme.background), reverseLayout = true
             ) {
 
                 itemsIndexed(it) { i, item -> Item.ListItem(item = item, first = i == 0, onHaptic = onHaptic) }
@@ -82,7 +82,7 @@ object Page {
 
     @Composable
     fun ModifyTemperature(currentTemperature: Float, onDownTemperature: () -> Unit, onUpTemperature: () -> Unit, onHaptic: () -> Unit) {
-        Divider(color = Color(0x20ffffff))
+        HorizontalDivider(color = Color(0x20ffffff))
         Row(
             modifier = Modifier
                 .padding(16.dp)
@@ -133,7 +133,7 @@ object Page {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(color = MaterialTheme.colors.background)
+                .background(color = MaterialTheme.colorScheme.background)
                 .onGloballyPositioned { layoutCoordinates -> size = layoutCoordinates.size },
             reverseLayout = true
         ) {

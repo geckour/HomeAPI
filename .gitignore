@@ -211,3 +211,5 @@ kotlinc.xml
 secret.properties
 github.properties
 .idea/
+
+app/release/

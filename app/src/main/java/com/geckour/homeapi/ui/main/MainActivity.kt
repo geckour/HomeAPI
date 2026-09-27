@@ -7,23 +7,19 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.ScaffoldState
-import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,9 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.geckour.homeapi.receiver.requestSleepData
+import com.geckour.homeapi.ui.AppTheme
 import com.geckour.homeapi.ui.Colors
-import com.geckour.homeapi.ui.DarkColors
-import com.geckour.homeapi.ui.LightColors
 import com.geckour.homeapi.ui.login.LoginActivity
 import com.geckour.homeapi.util.getRequestPermissionsLauncher
 import org.koin.android.ext.android.get
@@ -53,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         val permissions = buildList {
@@ -69,18 +65,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         setContent {
-            MaterialTheme(colors = if (isSystemInDarkTheme()) DarkColors else LightColors) {
+            AppTheme {
                 val data by viewModel.data.collectAsStateWithLifecycle()
-                val scaffoldState = rememberScaffoldState()
+                val snackbarHostState = remember { SnackbarHostState() }
                 var currentRange by remember { mutableStateOf(Dialog.Range.DAY) }
 
                 Content(
-                    scaffoldState = scaffoldState,
+                    snackbarHostState = snackbarHostState,
                     data = data,
                     currentRange = currentRange,
                 )
                 Loading(data = data)
-                Error(data = data, scaffoldState = scaffoldState)
+                Error(data = data, snackbarHostState = snackbarHostState)
 
                 data.environmentalData?.let {
                     Dialog.Environmental(environmentalData = it, onClearData = viewModel::clearEnvironmentalData, onHaptic = ::haptic)
@@ -108,62 +104,55 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun Content(
-        scaffoldState: ScaffoldState,
+        snackbarHostState: SnackbarHostState,
         data: MainViewModel.MainData,
         currentRange: Dialog.Range,
     ) {
-        val pagerState = rememberPagerState(pageCount = { 3 })
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = MaterialTheme.colors.background),
-        ) {
-            Scaffold(
-                modifier = Modifier.padding(WindowInsets.systemBars.asPaddingValues()),
-                scaffoldState = scaffoldState,
-                topBar = {
-                    Bar.TopBar(
-                        onSetRoom = viewModel::setRoom,
-                        onSendSignal = viewModel::sendSignal,
-                        onHaptic = ::haptic,
-                        currentRoom = data.room
-                    )
-                },
-                bottomBar = {
-                    Bar.BottomBar(
-                        pagerState = pagerState,
-                        onRequestEnvironmentalData = viewModel::requestEnvironmentalData,
-                        onRequestLogData = viewModel::requestLogDialogDataWithRange,
-                        onHaptic = ::haptic,
-                        currentRange = currentRange
-                    )
-                },
-            ) { innerPadding ->
-                HorizontalPager(
-                    state = pagerState,
-                    contentPadding = innerPadding,
-                ) { page ->
-                    when (page) {
-                        0 -> {
-                            Page.CeilingLight(items = viewModel.items, onHaptic = ::haptic)
-                        }
+        // The pager is the single source of truth of the current page, so both of swiping and the navigation bar can drive it
+        val pagerState = rememberPagerState(pageCount = { Page.Screen.entries.size })
+        Scaffold(
+            topBar = {
+                Bar.TopBar(
+                    onSetRoom = viewModel::setRoom,
+                    onSendSignal = viewModel::sendSignal,
+                    onHaptic = ::haptic,
+                    currentRoom = data.room
+                )
+            },
+            bottomBar = {
+                Bar.BottomBar(
+                    pagerState = pagerState,
+                    onRequestEnvironmentalData = viewModel::requestEnvironmentalData,
+                    onRequestLogData = viewModel::requestLogDialogDataWithRange,
+                    onHaptic = ::haptic,
+                    currentRange = currentRange
+                )
+            },
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        ) { innerPadding ->
+            HorizontalPager(
+                modifier = Modifier.padding(innerPadding),
+                state = pagerState,
+            ) { page ->
+                when (Page.Screen.entries[page]) {
+                    Page.Screen.CEILING_LIGHT -> {
+                        Page.CeilingLight(items = viewModel.items, onHaptic = ::haptic)
+                    }
 
-                        1 -> {
-                            Page.AirConductor(
-                                items = viewModel.items,
-                                onHaptic = ::haptic,
-                                onDownTemperature = viewModel::downTemperature,
-                                onUpTemperature = viewModel::upTemperature,
-                                currentTemperature = data.temperature
-                            )
-                        }
+                    Page.Screen.AIR_COND -> {
+                        Page.AirConductor(
+                            items = viewModel.items,
+                            onHaptic = ::haptic,
+                            onDownTemperature = viewModel::downTemperature,
+                            onUpTemperature = viewModel::upTemperature,
+                            currentTemperature = data.temperature
+                        )
+                    }
 
-                        2 -> {
-                            Page.Amp(items = viewModel.items, onHaptic = ::haptic)
-                        }
+                    Page.Screen.AMP -> {
+                        Page.Amp(items = viewModel.items, onHaptic = ::haptic)
                     }
                 }
             }
@@ -176,7 +165,7 @@ class MainActivity : AppCompatActivity() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(color = MaterialTheme.colors.surface)
+                    .background(color = MaterialTheme.colorScheme.surface)
             ) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Colors.TEAL200)
             }
@@ -184,14 +173,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    fun Error(data: MainViewModel.MainData, scaffoldState: ScaffoldState) {
+    fun Error(data: MainViewModel.MainData, snackbarHostState: SnackbarHostState) {
         data.error?.let {
             if ((it as? HttpException)?.code() in 400..401) {
                 startActivity(LoginActivity.newIntent(this))
             }
 
             LaunchedEffect(Unit) {
-                scaffoldState.snackbarHostState.showSnackbar(it.message.orEmpty(), actionLabel = "OK")
+                snackbarHostState.showSnackbar(it.message.orEmpty(), actionLabel = "OK")
             }
         }
     }

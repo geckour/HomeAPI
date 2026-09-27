@@ -8,10 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.Divider
-import androidx.compose.material.Text
-import androidx.compose.material.ripple
-import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -29,7 +28,7 @@ object Item {
     @Composable
     fun ListItem(item: RequestData, first: Boolean, onHaptic: () -> Unit) {
         val interactionSource = remember { MutableInteractionSource() }
-        if (first.not()) Divider(color = Color(0x20ffffff))
+        if (first.not()) HorizontalDivider(color = Color(0x20ffffff))
         Box(
             modifier = Modifier
                 .fillMaxWidth()
