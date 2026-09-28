@@ -29,7 +29,7 @@ class SplashActivity : AppCompatActivity() {
             ?.let { get<Json>().decodeFromString<OAuthToken>(it) }
 
         val intent =
-            if (token == null || SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sssXXX", Locale.JAPAN).parse(token.refreshTokenExpiresAt).before(Date())) {
+            if (token == null || SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.JAPAN).parse(token.refreshTokenExpiresAt).before(Date())) {
                 LoginActivity.newIntent(this)
             } else {
                 MainActivity.newIntent(this)
