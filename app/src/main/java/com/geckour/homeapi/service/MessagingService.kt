@@ -4,9 +4,13 @@ import android.Manifest
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Canvas
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.drawable.IconCompat
 import com.geckour.homeapi.NOTIFICATION_CHANNEL_ID_WIND_ALERT
 import com.geckour.homeapi.R
 import com.geckour.homeapi.api.APIService
@@ -19,6 +23,15 @@ import timber.log.Timber
 
 class MessagingService : FirebaseMessagingService() {
 
+    companion object {
+
+        private const val MESSAGE_TYPE_WIND_ALERT = "wind_alert"
+
+        // The icon depicts the wind blowing to the right (east) while the message's direction is where the wind blows from,
+        // so turning the icon by the direction plus this points it to where the wind blows to
+        private const val WIND_ALERT_ICON_ROTATION_OFFSET = 90f
+    }
+
     private val apiService: APIService by inject()
 
     // Called on a background thread; blocks until the registration finishes so that the service isn't stopped midway
@@ -30,9 +43,10 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
-    // Messages with a notification payload reach here only while the app is in the foreground; the system shows them otherwise
+    // The server sends data-only messages, which reach here even while the app is in the background
     override fun onMessageReceived(message: RemoteMessage) {
-        val notification = message.notification ?: return
+        val data = message.data
+        if (data["type"] != MESSAGE_TYPE_WIND_ALERT) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) return
@@ -43,17 +57,34 @@ class MessagingService : FirebaseMessagingService() {
             Intent(this, SplashActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE
         )
-        // Same tag and id as the ones the system uses, so that a newer notification for the same date replaces the older one
+        // The tag is per date, so that a newer notification for the same date replaces the older one
         NotificationManagerCompat.from(this).notify(
-            notification.tag,
+            data["tag"],
             0,
-            NotificationCompat.Builder(this, notification.channelId ?: NOTIFICATION_CHANNEL_ID_WIND_ALERT)
-                .setSmallIcon(R.drawable.ic_notification_wind_alert)
-                .setContentTitle(notification.title)
-                .setContentText(notification.body)
+            NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID_WIND_ALERT)
+                .setSmallIcon(windAlertIcon(data["direction"]?.toFloatOrNull()))
+                .setContentTitle(data["title"])
+                .setContentText(data["body"])
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true)
                 .build()
         )
+    }
+
+    // Returns the icon turned to where the wind blows to, or the unturned one when the direction is unknown
+    private fun windAlertIcon(direction: Float?): IconCompat {
+        val drawable = ContextCompat.getDrawable(this, R.drawable.ic_notification_wind_alert)
+        if (direction == null || drawable == null) {
+            return IconCompat.createWithResource(this, R.drawable.ic_notification_wind_alert)
+        }
+
+        val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
+        // The icon's paths fit in the circle inscribed in it, so turning it around the center cuts nothing off at any angle
+        Canvas(bitmap).apply {
+            rotate(direction + WIND_ALERT_ICON_ROTATION_OFFSET, width / 2f, height / 2f)
+            drawable.setBounds(0, 0, width, height)
+            drawable.draw(this)
+        }
+        return IconCompat.createWithBitmap(bitmap)
     }
 }
