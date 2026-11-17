@@ -26,6 +26,8 @@ class MessagingService : FirebaseMessagingService() {
     companion object {
 
         private const val MESSAGE_TYPE_WIND_ALERT = "wind_alert"
+        private const val WIND_ALERT_GROUP_KEY = "wind_alert"
+        private const val WIND_ALERT_SUMMARY_TAG = "wind-summary"
 
         // The icon depicts the wind blowing to the right (east) while the message's direction is where the wind blows from,
         // so turning the icon by the direction plus this points it to where the wind blows to
@@ -57,8 +59,9 @@ class MessagingService : FirebaseMessagingService() {
             Intent(this, SplashActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE
         )
+        val notificationManager = NotificationManagerCompat.from(this)
         // The tag is per date, so that a newer notification for the same date replaces the older one
-        NotificationManagerCompat.from(this).notify(
+        notificationManager.notify(
             data["tag"],
             0,
             NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID_WIND_ALERT)
@@ -67,6 +70,23 @@ class MessagingService : FirebaseMessagingService() {
                 .setContentText(data["body"])
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true)
+                .setGroup(WIND_ALERT_GROUP_KEY)
+                .build()
+        )
+        // Groups the alerts by itself; otherwise the system groups them with a generic icon since their turned icons differ.
+        // The summary stands for the group only while two or more alerts are shown, with the unturned icon.
+        notificationManager.notify(
+            WIND_ALERT_SUMMARY_TAG,
+            0,
+            NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID_WIND_ALERT)
+                .setSmallIcon(R.drawable.ic_notification_wind_alert)
+                .setContentTitle(data["title"])
+                .setContentIntent(contentIntent)
+                .setAutoCancel(true)
+                .setGroup(WIND_ALERT_GROUP_KEY)
+                .setGroupSummary(true)
+                // Leaves alerting to the alerts themselves, so that a single message doesn't alert twice
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
                 .build()
         )
     }
