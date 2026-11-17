@@ -4,13 +4,17 @@ import android.Manifest
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Rect
+import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.IconCompat
+import androidx.core.graphics.withRotation
 import com.geckour.homeapi.NOTIFICATION_CHANNEL_ID_WIND_ALERT
 import com.geckour.homeapi.R
 import com.geckour.homeapi.api.APIService
@@ -53,6 +57,7 @@ class MessagingService : FirebaseMessagingService() {
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) return
 
+        val direction = data["direction"]?.toFloatOrNull()
         val contentIntent = PendingIntent.getActivity(
             this,
             0,
@@ -65,7 +70,9 @@ class MessagingService : FirebaseMessagingService() {
             data["tag"],
             0,
             NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID_WIND_ALERT)
-                .setSmallIcon(windAlertIcon(data["direction"]?.toFloatOrNull()))
+                .setSmallIcon(windAlertIcon(direction))
+                // Recent systems show the app icon in place of the small icon in the shade, so the large icon shows the direction there
+                .setLargeIcon(direction?.let { windAlertLargeIcon(it) })
                 .setContentTitle(data["title"])
                 .setContentText(data["body"])
                 .setContentIntent(contentIntent)
@@ -74,12 +81,13 @@ class MessagingService : FirebaseMessagingService() {
                 .build()
         )
         // Groups the alerts by itself; otherwise the system groups them with a generic icon since their turned icons differ.
-        // The summary stands for the group only while two or more alerts are shown, with the unturned icon.
+        // The summary stands for the group only while two or more alerts are shown, with the app icon
+        // since the unturned wind icon would read as the wind blowing to the east.
         notificationManager.notify(
             WIND_ALERT_SUMMARY_TAG,
             0,
             NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID_WIND_ALERT)
-                .setSmallIcon(R.drawable.ic_notification_wind_alert)
+                .setSmallIcon(R.drawable.ic_notification_app)
                 .setContentTitle(data["title"])
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true)
@@ -99,12 +107,25 @@ class MessagingService : FirebaseMessagingService() {
         }
 
         val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
-        // The icon's paths fit in the circle inscribed in it, so turning it around the center cuts nothing off at any angle
-        Canvas(bitmap).apply {
-            rotate(direction + WIND_ALERT_ICON_ROTATION_OFFSET, width / 2f, height / 2f)
-            drawable.setBounds(0, 0, width, height)
+        Canvas(bitmap).drawTurnedWindAlertIcon(drawable, direction, Rect(0, 0, bitmap.width, bitmap.height))
+        return IconCompat.createWithBitmap(bitmap)
+    }
+
+    // Returns the white icon turned to where the wind blows to on a transparent background
+    private fun windAlertLargeIcon(direction: Float): Bitmap? {
+        val drawable = ContextCompat.getDrawable(this, R.drawable.ic_notification_wind_alert) ?: return null
+
+        val size = resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
+        val bitmap = createBitmap(size, size)
+        Canvas(bitmap).drawTurnedWindAlertIcon(drawable, direction, Rect(0, 0, size, size))
+        return bitmap
+    }
+
+    // The icon's paths fit in the circle inscribed in it, so turning it around the center cuts nothing off at any angle
+    private fun Canvas.drawTurnedWindAlertIcon(drawable: Drawable, direction: Float, bounds: Rect) {
+        withRotation(direction + WIND_ALERT_ICON_ROTATION_OFFSET, bounds.exactCenterX(), bounds.exactCenterY()) {
+            drawable.bounds = bounds
             drawable.draw(this)
         }
-        return IconCompat.createWithBitmap(bitmap)
     }
 }

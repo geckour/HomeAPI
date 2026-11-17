@@ -1,0 +1,27 @@
+<!-- The paths of ic_launcher_foreground, with the viewport cropped to them so that they fill a notification icon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="56"
+    android:viewportHeight="56">
+    <group
+        android:scaleX="0.09"
+        android:scaleY="0.09"
+        android:translateX="1.5"
+        android:translateY="-0.8">
+        <path
+            android:fillColor="#00000000"
+            android:fillType="nonZero"
+            android:pathData="M435,79l0,399.68l-281,0l0,-399.68z"
+            android:strokeWidth="30"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeLineJoin="round" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:fillType="nonZero"
+            android:pathData="M435,79L435,478.68L217,560.715L216.999,366.645C216.957,365.861 216.936,365.066 216.936,364.26C216.936,363.454 216.957,362.648 216.999,361.842L217,161.035L435,79ZM256.501,312.48C235.406,317.59 218.166,339.373 216.999,361.842L216.999,366.645C218.166,388.526 235.406,401.63 256.501,396.119C278.353,390.41 296.067,367.227 296.067,344.339C296.067,321.45 278.353,307.186 256.501,312.48Z"
+            android:strokeWidth="30"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeLineJoin="round" />
+    </group>
+</vector>
